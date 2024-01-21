@@ -16,7 +16,7 @@ plt.ion()  # Ensure interactive mode is on
 figi, axi = plt.subplots()
 figo, axo = plt.subplots()
 
-def visualize_input_layer(input_layer):
+def visualize_input_layer(input_layer, game_number, wins_for_X, wins_for_O, draws):
     clear_output(wait=True)
     axi.clear()  # Clear the axes to remove old content
 
@@ -26,8 +26,9 @@ def visualize_input_layer(input_layer):
     color_map = {0: 'white', 1: 'red', -1: 'green'}
     for (i, j), value in np.ndenumerate(input_grid):
         color = color_map[value]
-        rect = plt.Rectangle([j, i], 1, 1, color=color)
+        rect = plt.Rectangle([j, 2 - i], 1, 1, color=color)  # Reverse the order of the row index
         axi.add_patch(rect)
+
 
     # Annotations
     axi.set_title("Neural Network Input Layer")
@@ -43,10 +44,14 @@ def visualize_input_layer(input_layer):
     axi.set_xticks(np.arange(0.5, 3, 1))
     axi.set_yticks(np.arange(0.5, 3, 1))
     axi.set_xticklabels(['0', '1', '2'])
-    axi.set_yticklabels(['2', '1', '0'])
+    axi.set_yticklabels(['0', '1', '2'][::-1])
+
+    # Additional Game Info
+    info_text = f"Total: {game_number}, Wins for X: {wins_for_X}, Wins for O: {wins_for_O}, Draws: {draws}"
+    axi.text(0.5, -0.1, info_text, ha="center", fontsize=10, bbox={"facecolor": "orange", "alpha": 0.5, "pad": 5})
 
     plt.draw()
-    plt.pause(0.1)  # Adjust the pause time as needed
+    plt.pause(0.01)  # Adjust the pause time as needed
 
 def visualize_output_layer(output_layer_activation):
     clear_output(wait=True)
@@ -120,21 +125,30 @@ def epsilon_greedy_move(model, board, epsilon):
         return random.choice(valid_moves)
     else:
         board_state = np.array([board])
-        predictions = model.predict(board_state)[0]
+        predictions = model.predict(board_state, verbose=0)[0]
         for i in range(9):
             if board[i] != 0:
                 predictions[i] = -1e7
         return np.argmax(predictions)
 
-def update_model(model, game_history, winner):
-    for board_state, move in game_history:
-        target = np.zeros(9)
-        if winner == 1:
-            target[move] = 1.0
-        elif winner == -1:
-            target[move] = -1.0
-        model.fit(np.array([board_state]), np.array([target]), verbose=0, batch_size=32)
+def update_model(model, batch_game_history):
+    X_train = []
+    y_train = []
 
+    for game_history in batch_game_history:
+        for board_state, move in game_history:
+            target = np.zeros(9)
+            winner = check_winner(board_state)
+            if winner == 1:
+                target[move] = 1  # smaller reward for win
+            elif winner == -1:
+                target[move] = -1  # penalty for loss
+            elif winner == 2:
+                target[move] = 0.5  # small reward for draw
+            X_train.append(board_state)
+            y_train.append(target)
+
+    model.fit(np.array(X_train), np.array(y_train), verbose=0, batch_size=32)
 
 def summarize_game_history(game_history):
     wins_for_X = 0
@@ -156,26 +170,28 @@ def simulate_game_and_train(model, epsilon):
     board = [0]*9
     player = starting_player
     global game_history
-    global wins_for_X
-    global wins_for_O
-    global draws
+    global wins_for_X, wins_for_O, draws
+
+    current_game_history = []  # List to store moves of the current game
 
     while True:
 
         clear_screen()
+        print(f"Total: {game_number}, Wins for X: {wins_for_X}, Wins for O: {wins_for_O}, Draws: {draws}\n")
+        print(f"Starting Player: {Fore.RED + 'X' if starting_player == 1 else Fore.GREEN + 'O'}" + Style.RESET_ALL)
         print("Player", 'O' if player == -1 else 'X', "'s turn")
         print()
-        print_board(board)
-        visualize_input_layer(board)
+        #print_board(board)
+        #visualize_input_layer(board, game_number, wins_for_X, wins_for_O, draws)
     
         # Use epsilon-greedy strategy for move selection
         move = epsilon_greedy_move(model, board, epsilon)
 
         board_state = np.array([board])
-        predictions = model.predict(board_state)[0]
-        visualize_output_layer(predictions)
+        predictions = model.predict(board_state, verbose=0)[0]
+        #visualize_output_layer(predictions)
 
-        time.sleep(2)  # Pauses the program
+        #time.sleep(5)  # Pauses the program
 
         # Make the move
         valid_move_made = make_move(board, move, player)
@@ -183,16 +199,11 @@ def simulate_game_and_train(model, epsilon):
             continue  # Skip the rest if the move was invalid
 
         # Record the move for training
-        game_history.append((board.copy(), move))
+        current_game_history.append((board.copy(), move))
 
         # Check for game end
         winner = check_winner(board)
         if winner != 0:
-            clear_screen()
-            print("Player", 'O' if player == -1 else 'X', "'s turn")
-            print()
-            print_board(board)
-            visualize_input_layer(board)
 
             # Update counters
             if winner == 1:
@@ -202,54 +213,70 @@ def simulate_game_and_train(model, epsilon):
             elif winner == 2:
                 draws += 1
 
-            # Print game number and statistics
-            print(f"Starting Player: {Fore.RED + 'X' if starting_player == 1 else Fore.GREEN + 'O'}" + Style.RESET_ALL)
-            print(f"Game {game_number}: Winner - {Fore.RED + 'X' if winner == 1 else Fore.GREEN + 'O' if winner == -1 else 'Draw'}" + Style.RESET_ALL)
+            clear_screen()
             print(f"Total: {game_number}, Wins for X: {wins_for_X}, Wins for O: {wins_for_O}, Draws: {draws}\n")
+            print(f"Starting Player: {Fore.RED + 'X' if starting_player == 1 else Fore.GREEN + 'O'}" + Style.RESET_ALL)
+            print("Player", 'O' if player == -1 else 'X', "'s turn")
+            print()
+            #print_board(board)
+            #visualize_input_layer(board, game_number, wins_for_X, wins_for_O, draws)
+
+            # Print winner
+            print(f"Game {game_number}: Winner - {Fore.RED + 'X' if winner == 1 else Fore.GREEN + 'O' if winner == -1 else 'Draw'}" + Style.RESET_ALL)
             
-            update_model(model, game_history, winner)
-            return winner
+            return current_game_history  # Return the history of this game
+
         player = switch_player(player)
 
 # Neural network model with linear output layer activation
-model = keras.Sequential([
-    layers.Dense(64, activation='relu', input_shape=(9,)),
-    layers.Dense(64, activation='relu'),
-    layers.Dense(9, activation='linear')  # Linear activation for output layer
-])
+if os.path.exists('tic_tac_toe_model.keras'):
+    model = tf.keras.models.load_model('tic_tac_toe_model.keras')
+    print("Model loaded successfully.")
+    model.summary()  # Print the summary of the model
 
-model.compile(optimizer='adam', loss='mean_squared_error')
-
-# Load training data if exists
-if os.path.exists('game_history.pkl'):
-    with open('game_history.pkl', 'rb') as f:
-        game_history = pickle.load(f)
-    
-    wins_for_X, wins_for_O, draws = summarize_game_history(game_history)
-    print(f"Loaded training data history")
-    print(f"Summary: Wins for X: {wins_for_X}, Wins for O: {wins_for_O}, Draws: {draws}")
 else:
-    print("Initializing new training data")
-    game_history = []
-    winner = []
+    # Define and compile the model as before if it doesn't exist
+    model = keras.Sequential([
+        layers.Dense(64, activation='relu', input_shape=(9,)),
+        layers.Dropout(0.2),  # Dropout layer
+        layers.Dense(64, activation='relu'),
+        layers.Dropout(0.2),  # Another dropout layer
+        layers.Dense(9, activation='linear')
+    ])
+    model.compile(optimizer='adam', loss='mean_squared_error')
+    print("New model created.")
+    model.summary()  # Print the summary of the new model
+
+
+time.sleep(5)  # Pauses the program
+
 
 # Train the model over multiple games
 starting_player = 1  # Start with 'X' in the first game
-n_games = 5
+n_games = 1000
 
 # Initialize counters
 wins_for_X = 0
 wins_for_O = 0
 draws = 0
 
-# Main training loop
 epsilon_start = 1.0
 epsilon_end = 0.1
-epsilon_decay = 0.995
+epsilon_decay = 0.99
 epsilon = epsilon_start
 
+batch_size = 10  # Define the number of games after which model will be updated
+batch_game_history = []
+
 for game_number in range(1, n_games + 1):
-    winner = simulate_game_and_train(model, epsilon)
+    current_game_history = simulate_game_and_train(model, epsilon)
+    batch_game_history.append(current_game_history)  # Append the history of the current game
+
+    # Check if it's time to update the model
+    if game_number % batch_size == 0 or game_number == n_games:
+        print(f"update model")
+        update_model(model, batch_game_history)
+        batch_game_history = []  # Reset for the next batch
 
     # Update epsilon
     epsilon = max(epsilon_end, epsilon_decay * epsilon)
@@ -257,6 +284,4 @@ for game_number in range(1, n_games + 1):
     # Switch starting player for the next game
     starting_player = -starting_player
 
-# Save the game history using pickle
-with open('game_history.pkl', 'wb') as f:
-    pickle.dump(game_history, f)
+model.save('tic_tac_toe_model.keras')  # Saves the model in Keras format
