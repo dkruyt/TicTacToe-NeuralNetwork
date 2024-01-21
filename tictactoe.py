@@ -73,12 +73,12 @@ def visualize_input_layer(input_layer, game_number, wins_for_X, wins_for_O, draw
     plt.pause(0.01)  # Adjust the pause time as needed
 
 # Define function to visualize activations in the output layer
-def visualize_output_layer(output_layer_activation):
+def visualize_output_layer(output_layer_activation, board, colormap='autumn'):
     clear_output(wait=True)
     axo.clear()  # Clear the axes to remove old content
 
     output_grid = output_layer_activation.reshape((3, 3))
-    axo.imshow(output_grid, cmap='hot', interpolation='nearest')
+    heatmap = axo.imshow(output_grid, cmap=colormap, interpolation='nearest')
 
     # Annotations
     axo.set_title("Neural Network Output Layer Activation")
@@ -91,7 +91,11 @@ def visualize_output_layer(output_layer_activation):
 
     # Adding value annotations on each cell
     for (i, j), value in np.ndenumerate(output_grid):
-        axo.text(j, i, f'{value:.2f}', ha='center', va='center', color='gray')
+        if board[i * 3 + j] != 0:  # Check if the move is taken
+            text_color = 'lightgray'  # Gray out the text for taken moves
+        else:
+            text_color = 'blue'  # Use a different color for available moves
+        axo.text(j, i, f'{value:.2f}', ha='center', va='center', color=text_color)
 
     # Render the plot
     plt.draw()
@@ -228,7 +232,7 @@ def simulate_game_and_train(model, epsilon):
         predictions = model.predict(board_state, verbose=0)[0]
         if args.show_visuals:
             visualize_input_layer(board, game_number, wins_for_X, wins_for_O, draws)
-            visualize_output_layer(predictions)
+            visualize_output_layer(predictions, board)
 
         # Determine the move based on player type
         if (args.human_player == 'X' and player == 1) or (args.human_player == 'O' and player == -1):
@@ -272,7 +276,7 @@ def simulate_game_and_train(model, epsilon):
                 print_board(board)
             if args.show_visuals:
                 visualize_input_layer(board, game_number, wins_for_X, wins_for_O, draws)
-                visualize_output_layer(predictions)
+                visualize_output_layer(predictions, board)
 
             # Print winner
             print(f"Game {game_number}: Winner - {Fore.RED + 'X' if winner == 1 else Fore.GREEN + 'O' if winner == -1 else 'Draw'}" + Style.RESET_ALL)
