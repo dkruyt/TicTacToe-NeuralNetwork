@@ -173,26 +173,43 @@ def epsilon_greedy_move(model, board, epsilon):
                 predictions[i] = -1e7
         return np.argmax(predictions)
 
-# Function to update the neural network model with new game data
+# Function to assign improved rewards based on game outcome
+def assign_rewards(game_history, winner):
+    reward_for_win = 1.0
+    reward_for_loss = -1.0
+    reward_for_draw = 0.5
+
+    if winner == 1:
+        reward = reward_for_win
+    elif winner == -1:
+        reward = reward_for_loss
+    elif winner == 2:
+        reward = reward_for_draw
+    else:
+        raise ValueError("Invalid winner value")
+
+    decay_factor = 0.9
+    current_reward = reward
+
+    for i in range(len(game_history) - 1, -1, -1):
+        board_state, move = game_history[i]
+        target = np.zeros(9)
+        target[move] = current_reward
+        game_history[i] = (board_state, target)
+        current_reward *= decay_factor
+
+# Update the model training function
 def update_model(model, batch_game_history):
-    X_train = []  # Training data inputs
-    y_train = []  # Training data outputs (targets)
+    X_train = []
+    y_train = []
 
     for game_history in batch_game_history:
-        for board_state, move in game_history:
-            target = np.zeros(9)
-            winner = check_winner(board_state)
-            # Set rewards/punishments based on game outcome
-            if winner == 1:
-                target[move] = 1  # smaller reward for win
-            elif winner == -1:
-                target[move] = -1  # penalty for loss
-            elif winner == 2:
-                target[move] = 0.5  # small reward for draw
+        assign_rewards(game_history, check_winner(game_history[-1][0]))  # Assign rewards based on game outcome
+        for board_state, target in game_history:
             X_train.append(board_state)
             y_train.append(target)
 
-    model.fit(np.array(X_train), np.array(y_train), verbose=0, batch_size=32)
+    model.fit(np.array(X_train), np.array(y_train), verbose=1, batch_size=32)
 
 # Function to summarize the outcomes of games in the game history
 def summarize_game_history(game_history):
@@ -304,6 +321,8 @@ else:
     print("New model created.")
     model.summary()  # Print the summary of the new model
 
+initial_weights = model.get_weights()
+
 # Just a sleep show you can read the model summary
 time.sleep(5)  # Pauses the program
 
@@ -346,5 +365,20 @@ for game_number in range(1, n_games + 1):
     
     if (args.human_player == 'X') or (args.human_player == 'O'):
         time.sleep(3)  # Pauses the program
-   
+
+# Get new weights after training
+new_weights = model.get_weights()
+
+# Compare the initial and new weights
+for initial, new in zip(initial_weights, new_weights):
+    if not np.array_equal(initial, new):
+        print("Weights have changed after training.")
+        break
+else:
+    print("Weights have not changed after training.")
+
+# Optionally, you can quantify the change in weights using a metric like mean absolute difference
+weight_changes = [np.mean(np.abs(w_new - w_initial)) for w_initial, w_new in zip(initial_weights, new_weights)]
+print("Mean absolute changes in weights per layer:", weight_changes)
+
 model.save('tic_tac_toe_model.keras')  # Saves the model in Keras format
