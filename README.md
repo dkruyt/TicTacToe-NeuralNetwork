@@ -21,7 +21,7 @@ pip install numpy tensorflow keras matplotlib colorama IPython
 
 ## Usage
 Run the script from the command line. There are several optional arguments you can use:
-- `--show-visuals`: Enable visual display of the game state and neural network layers.
+- `--show-visuals`: Enable visual display of the game state and neural network layers. But makes it much slower, just for observation!
 - `--show-text`: Enable text display of the game progress and results.
 - `--delay`: Add a delay in the game loop for better observation.
 
