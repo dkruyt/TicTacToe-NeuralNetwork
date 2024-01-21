@@ -19,17 +19,20 @@ parser.add_argument('--show-visuals', action='store_true', help='Enable game vis
 parser.add_argument('--show-text', action='store_true', help='Enable game text')
 parser.add_argument('--delay', action='store_true', help='add delay')
 
-
 args = parser.parse_args()
 
-plt.ion()  # Ensure interactive mode is on
+# Ensure interactive mode is on for live updating of plots
+plt.ion()
+
 figi, axi = plt.subplots()
 figo, axo = plt.subplots()
 
+# Define a function to visualize the input layer of the neural network
 def visualize_input_layer(input_layer, game_number, wins_for_X, wins_for_O, draws):
     clear_output(wait=True)
     axi.clear()  # Clear the axes to remove old content
 
+    # Reshape input layer to 3x3 grid to match Tic-Tac-Toe board
     input_grid = np.array(input_layer).reshape((3, 3))
 
     # Use a simple color map: empty = white, X = red, O = green
@@ -40,7 +43,7 @@ def visualize_input_layer(input_layer, game_number, wins_for_X, wins_for_O, draw
         axi.add_patch(rect)
 
 
-    # Annotations
+    # Add title and axis labels
     axi.set_title("Neural Network Input Layer")
     axi.set_xlabel("Column in Tic-Tac-Toe Board")
     axi.set_ylabel("Row in Tic-Tac-Toe Board")
@@ -60,9 +63,11 @@ def visualize_input_layer(input_layer, game_number, wins_for_X, wins_for_O, draw
     info_text = f"Total: {game_number}, Wins for X: {wins_for_X}, Wins for O: {wins_for_O}, Draws: {draws}"
     axi.text(0.5, -0.1, info_text, ha="center", fontsize=10, bbox={"facecolor": "orange", "alpha": 0.5, "pad": 5})
 
+    # Render the plot
     plt.draw()
     plt.pause(0.01)  # Adjust the pause time as needed
 
+# Define function to visualize activations in the output layer
 def visualize_output_layer(output_layer_activation):
     clear_output(wait=True)
     axo.clear()  # Clear the axes to remove old content
@@ -83,6 +88,7 @@ def visualize_output_layer(output_layer_activation):
     for (i, j), value in np.ndenumerate(output_grid):
         axo.text(j, i, f'{value:.2f}', ha='center', va='center', color='gray')
 
+    # Render the plot
     plt.draw()
     plt.pause(0.1)  # Adjust the pause time as needed
 
@@ -92,6 +98,7 @@ def clear_screen():
     else:
         os.system('clear')
 
+# Function to check if there is a winner or draw
 def check_winner(board):
     for i in range(3):
         # Check rows
@@ -110,16 +117,18 @@ def check_winner(board):
         return 2  # Draw
     return 0  # Game ongoing
 
+# Function to update the board state with the player's move
 def make_move(board, move, player):
     if board[move] == 0:
         board[move] = player
         return True
     return False
 
+# Function to switch players between moves
 def switch_player(player):
     return -player
 
-# Board printing function
+# Function to print the current state of the board
 def print_board(board):
     symbols = {1: Fore.RED + 'X', -1: Fore.GREEN + 'O', 0: Style.RESET_ALL +' '}
     for i in range(3):
@@ -129,6 +138,7 @@ def print_board(board):
     print(Style.RESET_ALL)
     print()
 
+# Function to select the next move using epsilon-greedy strategy
 def epsilon_greedy_move(model, board, epsilon):
     if random.random() < epsilon:
         valid_moves = [i for i in range(9) if board[i] == 0]
@@ -141,14 +151,16 @@ def epsilon_greedy_move(model, board, epsilon):
                 predictions[i] = -1e7
         return np.argmax(predictions)
 
+# Function to update the neural network model with new game data
 def update_model(model, batch_game_history):
-    X_train = []
-    y_train = []
+    X_train = []  # Training data inputs
+    y_train = []  # Training data outputs (targets)
 
     for game_history in batch_game_history:
         for board_state, move in game_history:
             target = np.zeros(9)
             winner = check_winner(board_state)
+            # Set rewards/punishments based on game outcome
             if winner == 1:
                 target[move] = 1  # smaller reward for win
             elif winner == -1:
