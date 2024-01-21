@@ -25,6 +25,8 @@ Run the script from the command line. There are several optional arguments you c
 - `--show-text`: Enable text display of the game progress and results.
 - `--delay`: Add a delay in the game loop for better observation.
 
+Can also run without for max speed.
+
 Example:
 ```
 python tic_tac_toe.py --show-visuals --show-text
