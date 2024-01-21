@@ -44,6 +44,9 @@ def visualize_input_layer(input_layer, game_number, wins_for_X, wins_for_O, draw
         rect = plt.Rectangle([j, 2 - i], 1, 1, color=color)  # Reverse the order of the row index
         axi.add_patch(rect)
 
+        # Adding cell numbers as text annotations inside each cell
+        cell_number = i * 3 + j
+        axi.text(j + 0.5, 2.5 - i, str(cell_number), ha='center', va='center', color='blue', fontsize=12)
 
     # Add title and axis labels
     axi.set_title("Neural Network Input Layer")
@@ -220,7 +223,13 @@ def simulate_game_and_train(model, epsilon):
             print("Player", 'O' if player == -1 else 'X', "'s turn")
             print()
             print_board(board)
-    
+
+        board_state = np.array([board])
+        predictions = model.predict(board_state, verbose=0)[0]
+        if args.show_visuals:
+            visualize_input_layer(board, game_number, wins_for_X, wins_for_O, draws)
+            visualize_output_layer(predictions)
+
         # Determine the move based on player type
         if (args.human_player == 'X' and player == 1) or (args.human_player == 'O' and player == -1):
             move = get_human_move(board)
@@ -228,11 +237,11 @@ def simulate_game_and_train(model, epsilon):
             # Use epsilon-greedy strategy for move selection
             move = epsilon_greedy_move(model, board, epsilon)
 
-        board_state = np.array([board])
-        predictions = model.predict(board_state, verbose=0)[0]
-        if args.show_visuals:
-            visualize_input_layer(board, game_number, wins_for_X, wins_for_O, draws)
-            visualize_output_layer(predictions)
+        #board_state = np.array([board])
+        #predictions = model.predict(board_state, verbose=0)[0]
+        #if args.show_visuals:
+        #    visualize_input_layer(board, game_number, wins_for_X, wins_for_O, draws)
+        #    visualize_output_layer(predictions)
 
         if args.delay:
             time.sleep(1)  # Pauses the program
@@ -244,7 +253,7 @@ def simulate_game_and_train(model, epsilon):
 
         # Record the move for training
         current_game_history.append((board.copy(), move))
-
+        
         # Check for game end
         winner = check_winner(board)
         if winner != 0:
@@ -334,7 +343,7 @@ for game_number in range(1, n_games + 1):
     if args.delay:
         time.sleep(5)  # Pauses the program
     
-    if (args.human_player == 'X' and player == 1) or (args.human_player == 'O' and player == -1):
+    if (args.human_player == 'X') or (args.human_player == 'O'):
         time.sleep(5)  # Pauses the program
    
 model.save('tic_tac_toe_model.keras')  # Saves the model in Keras format
