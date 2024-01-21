@@ -18,6 +18,8 @@ parser = argparse.ArgumentParser(description='Run Tic-Tac-Toe game with optional
 parser.add_argument('--show-visuals', action='store_true', help='Enable game visuals')
 parser.add_argument('--show-text', action='store_true', help='Enable game text')
 parser.add_argument('--delay', action='store_true', help='add delay')
+parser.add_argument('--human-player', type=str, choices=['X', 'O', 'None'], default='None', help='Play as a human player with X or O, or None for AI vs AI')
+parser.add_argument('--games', type=int, default=10, help='Number of games to play')
 
 args = parser.parse_args()
 
@@ -124,6 +126,19 @@ def make_move(board, move, player):
         return True
     return False
 
+# Function for a human player
+def get_human_move(board):
+    valid_moves = [i for i in range(9) if board[i] == 0]
+    move = None
+    while move not in valid_moves:
+        try:
+            move = int(input("Enter your move (0-8): "))
+            if move not in valid_moves:
+                print("Invalid move. Please try again.")
+        except ValueError:
+            print("Invalid input. Please enter a number.")
+    return move
+
 # Function to switch players between moves
 def switch_player(player):
     return -player
@@ -206,8 +221,12 @@ def simulate_game_and_train(model, epsilon):
             print()
             print_board(board)
     
-        # Use epsilon-greedy strategy for move selection
-        move = epsilon_greedy_move(model, board, epsilon)
+        # Determine the move based on player type
+        if (args.human_player == 'X' and player == 1) or (args.human_player == 'O' and player == -1):
+            move = get_human_move(board)
+        else:
+            # Use epsilon-greedy strategy for move selection
+            move = epsilon_greedy_move(model, board, epsilon)
 
         board_state = np.array([board])
         predictions = model.predict(board_state, verbose=0)[0]
@@ -280,7 +299,8 @@ time.sleep(5)  # Pauses the program
 
 # Train the model over multiple games
 starting_player = 1  # Start with 'X' in the first game
-n_games = 1000
+#n_games = 1000
+n_games = args.games
 
 # Initialize counters
 wins_for_X = 0
@@ -313,5 +333,8 @@ for game_number in range(1, n_games + 1):
 
     if args.delay:
         time.sleep(5)  # Pauses the program
-           
+    
+    if (args.human_player == 'X' and player == 1) or (args.human_player == 'O' and player == -1):
+        time.sleep(5)  # Pauses the program
+   
 model.save('tic_tac_toe_model.keras')  # Saves the model in Keras format
