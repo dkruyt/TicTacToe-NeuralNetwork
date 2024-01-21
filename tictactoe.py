@@ -266,18 +266,17 @@ else:
     # Define and compile the model as before if it doesn't exist
     model = keras.Sequential([
         layers.Dense(64, activation='relu', input_shape=(9,)),
-        layers.Dropout(0.2),  # Dropout layer
+        layers.Dropout(0.1),  # Dropout layer
         layers.Dense(64, activation='relu'),
-        layers.Dropout(0.2),  # Another dropout layer
+        layers.Dropout(0.1),  # Another dropout layer
         layers.Dense(9, activation='linear')
     ])
     model.compile(optimizer='adam', loss='mean_squared_error')
     print("New model created.")
     model.summary()  # Print the summary of the new model
 
-
+# Just a sleep show you can read the model summary
 time.sleep(5)  # Pauses the program
-
 
 # Train the model over multiple games
 starting_player = 1  # Start with 'X' in the first game
