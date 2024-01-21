@@ -21,15 +21,17 @@ pip install numpy tensorflow keras matplotlib colorama IPython
 
 ## Usage
 Run the script from the command line. There are several optional arguments you can use:
-- `--show-visuals`: Enable visual display of the game state and neural network layers. But makes it much slower, just for observation!
-- `--show-text`: Enable text display of the game progress and results.
-- `--delay`: Add a delay in the game loop for better observation.
+- `--show-visuals`: Enable visual representation of the neural network's layers.
+- `--show-text`: Display text-based game output.
+- `--delay`: Add a delay between moves for better visualization.
+- `--human-player` [X|O|None]: Choose to play as 'X', 'O', or set 'None' for AI vs AI.
+- `--games` [number]: Specify the number of games to be played.
 
 Can also run without for max speed.
 
 Example:
 ```
-python tic_tac_toe.py --show-visuals --show-text
+python tictactoe.py --show-visuals --show-text
 ```
 
 ## Features
