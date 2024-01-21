@@ -7,10 +7,20 @@ import pickle
 from colorama import Fore, Back, Style
 import matplotlib.pyplot as plt
 from IPython.display import clear_output
-
 import os
 import time
 import platform
+import argparse
+
+
+# Set up the argument parser
+parser = argparse.ArgumentParser(description='Run Tic-Tac-Toe game with optional visuals.')
+parser.add_argument('--show-visuals', action='store_true', help='Enable game visuals')
+parser.add_argument('--show-text', action='store_true', help='Enable game text')
+parser.add_argument('--delay', action='store_true', help='add delay')
+
+
+args = parser.parse_args()
 
 plt.ion()  # Ensure interactive mode is on
 figi, axi = plt.subplots()
@@ -175,23 +185,25 @@ def simulate_game_and_train(model, epsilon):
     current_game_history = []  # List to store moves of the current game
 
     while True:
-
-        clear_screen()
-        print(f"Total: {game_number}, Wins for X: {wins_for_X}, Wins for O: {wins_for_O}, Draws: {draws}\n")
-        print(f"Starting Player: {Fore.RED + 'X' if starting_player == 1 else Fore.GREEN + 'O'}" + Style.RESET_ALL)
-        print("Player", 'O' if player == -1 else 'X', "'s turn")
-        print()
-        #print_board(board)
-        #visualize_input_layer(board, game_number, wins_for_X, wins_for_O, draws)
+        if args.show_text:
+            clear_screen()
+            print(f"Total: {game_number}, Wins for X: {wins_for_X}, Wins for O: {wins_for_O}, Draws: {draws}\n")
+            print(f"Starting Player: {Fore.RED + 'X' if starting_player == 1 else Fore.GREEN + 'O'}" + Style.RESET_ALL)
+            print("Player", 'O' if player == -1 else 'X', "'s turn")
+            print()
+            print_board(board)
     
         # Use epsilon-greedy strategy for move selection
         move = epsilon_greedy_move(model, board, epsilon)
 
         board_state = np.array([board])
         predictions = model.predict(board_state, verbose=0)[0]
-        #visualize_output_layer(predictions)
+        if args.show_visuals:
+            visualize_input_layer(board, game_number, wins_for_X, wins_for_O, draws)
+            visualize_output_layer(predictions)
 
-        #time.sleep(5)  # Pauses the program
+        if args.delay:
+            time.sleep(1)  # Pauses the program
 
         # Make the move
         valid_move_made = make_move(board, move, player)
@@ -213,19 +225,22 @@ def simulate_game_and_train(model, epsilon):
             elif winner == 2:
                 draws += 1
 
-            clear_screen()
-            print(f"Total: {game_number}, Wins for X: {wins_for_X}, Wins for O: {wins_for_O}, Draws: {draws}\n")
-            print(f"Starting Player: {Fore.RED + 'X' if starting_player == 1 else Fore.GREEN + 'O'}" + Style.RESET_ALL)
-            print("Player", 'O' if player == -1 else 'X', "'s turn")
-            print()
-            #print_board(board)
-            #visualize_input_layer(board, game_number, wins_for_X, wins_for_O, draws)
+            if args.show_text:
+                clear_screen()
+                print(f"Total: {game_number}, Wins for X: {wins_for_X}, Wins for O: {wins_for_O}, Draws: {draws}\n")
+                print(f"Starting Player: {Fore.RED + 'X' if starting_player == 1 else Fore.GREEN + 'O'}" + Style.RESET_ALL)
+                print("Player", 'O' if player == -1 else 'X', "'s turn")
+                print()
+                print_board(board)
+            if args.show_visuals:
+                visualize_input_layer(board, game_number, wins_for_X, wins_for_O, draws)
+                visualize_output_layer(predictions)
 
             # Print winner
             print(f"Game {game_number}: Winner - {Fore.RED + 'X' if winner == 1 else Fore.GREEN + 'O' if winner == -1 else 'Draw'}" + Style.RESET_ALL)
             
             return current_game_history  # Return the history of this game
-
+ 
         player = switch_player(player)
 
 # Neural network model with linear output layer activation
@@ -284,4 +299,7 @@ for game_number in range(1, n_games + 1):
     # Switch starting player for the next game
     starting_player = -starting_player
 
+    if args.delay:
+        time.sleep(5)  # Pauses the program
+           
 model.save('tic_tac_toe_model.keras')  # Saves the model in Keras format
