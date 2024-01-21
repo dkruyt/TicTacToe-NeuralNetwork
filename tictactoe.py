@@ -65,7 +65,7 @@ def visualize_input_layer(input_layer, game_number, wins_for_X, wins_for_O, draw
     axi.set_yticklabels(['0', '1', '2'][::-1])
 
     # Additional Game Info
-    info_text = f"Total: {game_number}, Wins for X: {wins_for_X}, Wins for O: {wins_for_O}, Draws: {draws}"
+    info_text = f"Round: {game_number}, Wins for X: {wins_for_X}, Wins for O: {wins_for_O}, Draws: {draws}"
     axi.text(0.5, -0.1, info_text, ha="center", fontsize=10, bbox={"facecolor": "orange", "alpha": 0.5, "pad": 5})
 
     # Render the plot
@@ -234,14 +234,11 @@ def simulate_game_and_train(model, epsilon):
         if (args.human_player == 'X' and player == 1) or (args.human_player == 'O' and player == -1):
             move = get_human_move(board)
         else:
-            # Use epsilon-greedy strategy for move selection
+            if (args.human_player == 'X') or (args.human_player == 'O'):
+                visualize_input_layer(board, game_number, wins_for_X, wins_for_O, draws)
+                time.sleep(3)  # Pauses the program
+             # Use epsilon-greedy strategy for move selection  
             move = epsilon_greedy_move(model, board, epsilon)
-
-        #board_state = np.array([board])
-        #predictions = model.predict(board_state, verbose=0)[0]
-        #if args.show_visuals:
-        #    visualize_input_layer(board, game_number, wins_for_X, wins_for_O, draws)
-        #    visualize_output_layer(predictions)
 
         if args.delay:
             time.sleep(1)  # Pauses the program
@@ -344,6 +341,6 @@ for game_number in range(1, n_games + 1):
         time.sleep(5)  # Pauses the program
     
     if (args.human_player == 'X') or (args.human_player == 'O'):
-        time.sleep(5)  # Pauses the program
+        time.sleep(3)  # Pauses the program
    
 model.save('tic_tac_toe_model.keras')  # Saves the model in Keras format
