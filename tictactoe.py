@@ -53,6 +53,26 @@ def print_board(board):
     print(Style.RESET_ALL)
     print()
 
+def epsilon_greedy_move(model, board, epsilon):
+    """
+    Choose an action using an epsilon-greedy strategy.
+    - With probability epsilon, make a random move.
+    - With probability 1 - epsilon, make a move based on the model's prediction.
+    """
+    if random.random() < epsilon:
+        # Make a random move
+        valid_moves = [i for i in range(9) if board[i] == 0]
+        return random.choice(valid_moves)
+    else:
+        # Make a move based on the model's prediction
+        board_state = np.array([board])
+        predictions = model.predict(board_state)[0]
+        # Set the prediction for occupied spots to a large negative value
+        for i in range(9):
+            if board[i] != 0:
+                predictions[i] = -1e7
+        return np.argmax(predictions)
+
 def update_model(model, game_history, winner):
     for board_state, move in game_history:
         target = np.zeros(9)
@@ -80,31 +100,25 @@ def summarize_game_history(game_history):
 
     return wins_for_X, wins_for_O, draws
 
-def simulate_game_and_train(model):
+def simulate_game_and_train(model, epsilon):
     board = [0]*9
-    player = starting_player  # Set starting player based on the parameter
+    player = starting_player
     global game_history
-    #game_history = []
 
     while True:
-        valid_move_made = False
-        while not valid_move_made:
-            #clear_screen()
-            #print_board(board)
-            #time.sleep(0.1)  # Pauses the program
-            #print("Player", 'O' if player == -1 else 'X', "'s turn")
 
-            # Get model's move (using random move for untrained model)
-            valid_moves = [i for i in range(9) if board[i] == 0]
-            if not valid_moves:
-                #clear_screen()
-                print_board(board)
-                print(f"Winner: DRAW")
-                return 2  # Draw, no more valid moves
-            move = random.choice(valid_moves)
+        clear_screen()
+        print_board(board)
+        print("Player", 'O' if player == -1 else 'X', "'s turn")
+        time.sleep(0.1)  # Pauses the program
+    
+        # Use epsilon-greedy strategy for move selection
+        move = epsilon_greedy_move(model, board, epsilon)
 
-            # Make the move
-            valid_move_made = make_move(board, move, player)
+        # Make the move
+        valid_move_made = make_move(board, move, player)
+        if not valid_move_made:
+            continue  # Skip the rest if the move was invalid
 
         # Record the move for training
         game_history.append((board.copy(), move))
@@ -112,11 +126,10 @@ def simulate_game_and_train(model):
         # Check for game end
         winner = check_winner(board)
         if winner != 0:
-            #clear_screen()
             print_board(board)
-            print(f"Winner: {'X' if player == 1 else 'O' if player == -1 else 'Draw'}")
+            print(f"Winner: {'X' if winner == 1 else 'O' if winner == -1 else 'Draw'}")
             update_model(model, game_history, winner)
-            return winner  # 1 or -1 for a player win, 2 for draw
+            return winner
         player = switch_player(player)
 
 # Neural network model
@@ -128,11 +141,6 @@ model = keras.Sequential([
 
 # Compile the model
 model.compile(optimizer='adam', loss='mean_squared_error')
-
-# Initialize counters
-wins_for_X = 0
-wins_for_O = 0
-draws = 0
 
 # Load training data if exists
 if os.path.exists('game_history.pkl'):
@@ -150,9 +158,24 @@ else:
 
 # Train the model over multiple games
 starting_player = 1  # Start with 'X' in the first game
-n_games = 250
+n_games = 5
+
+# Initialize counters
+wins_for_X = 0
+wins_for_O = 0
+draws = 0
+
+# Main training loop
+epsilon_start = 1.0
+epsilon_end = 0.1
+epsilon_decay = 0.995
+epsilon = epsilon_start
+
 for game_number in range(1, n_games + 1):
-    winner = simulate_game_and_train(model)
+    winner = simulate_game_and_train(model, epsilon)
+
+    # Update epsilon
+    epsilon = max(epsilon_end, epsilon_decay * epsilon)
 
     # Update counters
     if winner == 1:
