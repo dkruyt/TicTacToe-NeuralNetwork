@@ -5,10 +5,71 @@ from tensorflow import keras
 from tensorflow.keras import layers
 import pickle
 from colorama import Fore, Back, Style
+import matplotlib.pyplot as plt
+from IPython.display import clear_output
 
 import os
 import time
 import platform
+
+plt.ion()  # Ensure interactive mode is on
+figi, axi = plt.subplots()
+figo, axo = plt.subplots()
+
+def visualize_input_layer(input_layer):
+    clear_output(wait=True)
+    axi.clear()  # Clear the axes to remove old content
+
+    input_grid = np.array(input_layer).reshape((3, 3))
+
+    # Use a simple color map: empty = white, X = red, O = green
+    color_map = {0: 'white', 1: 'red', -1: 'green'}
+    for (i, j), value in np.ndenumerate(input_grid):
+        color = color_map[value]
+        rect = plt.Rectangle([j, i], 1, 1, color=color)
+        axi.add_patch(rect)
+
+    # Annotations
+    axi.set_title("Neural Network Input Layer")
+    axi.set_xlabel("Column in Tic-Tac-Toe Board")
+    axi.set_ylabel("Row in Tic-Tac-Toe Board")
+
+    # Set aspect ratio to equal to make the plot square
+    axi.set_aspect('equal', adjustable='box')
+    axi.set_xlim(0, 3)
+    axi.set_ylim(0, 3)
+
+    # Center the tick labels
+    axi.set_xticks(np.arange(0.5, 3, 1))
+    axi.set_yticks(np.arange(0.5, 3, 1))
+    axi.set_xticklabels(['0', '1', '2'])
+    axi.set_yticklabels(['2', '1', '0'])
+
+    plt.draw()
+    plt.pause(0.1)  # Adjust the pause time as needed
+
+def visualize_output_layer(output_layer_activation):
+    clear_output(wait=True)
+    axo.clear()  # Clear the axes to remove old content
+
+    output_grid = output_layer_activation.reshape((3, 3))
+    axo.imshow(output_grid, cmap='hot', interpolation='nearest')
+
+    # Annotations
+    axo.set_title("Neural Network Output Layer Activation")
+    axo.set_xlabel("Column in Tic-Tac-Toe Board")
+    axo.set_ylabel("Row in Tic-Tac-Toe Board")
+
+    axo.set_aspect('equal', adjustable='box')
+    axo.set_xticks(np.arange(0, 3, 1))
+    axo.set_yticks(np.arange(0, 3, 1))
+
+    # Adding value annotations on each cell
+    for (i, j), value in np.ndenumerate(output_grid):
+        axo.text(j, i, f'{value:.2f}', ha='center', va='center', color='gray')
+
+    plt.draw()
+    plt.pause(0.1)  # Adjust the pause time as needed
 
 def clear_screen():
     if platform.system() == "Windows":
@@ -105,10 +166,16 @@ def simulate_game_and_train(model, epsilon):
         print("Player", 'O' if player == -1 else 'X', "'s turn")
         print()
         print_board(board)
-        time.sleep(0.5)  # Pauses the program
+        visualize_input_layer(board)
     
         # Use epsilon-greedy strategy for move selection
         move = epsilon_greedy_move(model, board, epsilon)
+
+        board_state = np.array([board])
+        predictions = model.predict(board_state)[0]
+        visualize_output_layer(predictions)
+
+        time.sleep(2)  # Pauses the program
 
         # Make the move
         valid_move_made = make_move(board, move, player)
@@ -125,6 +192,8 @@ def simulate_game_and_train(model, epsilon):
             print("Player", 'O' if player == -1 else 'X', "'s turn")
             print()
             print_board(board)
+            visualize_input_layer(board)
+
             # Update counters
             if winner == 1:
                 wins_for_X += 1
@@ -162,7 +231,6 @@ if os.path.exists('game_history.pkl'):
 else:
     print("Initializing new training data")
     game_history = []
-
     winner = []
 
 # Train the model over multiple games
