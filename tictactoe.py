@@ -172,6 +172,7 @@ def update_model(model, batch_game_history):
 
     model.fit(np.array(X_train), np.array(y_train), verbose=0, batch_size=32)
 
+# Function to summarize the outcomes of games in the game history
 def summarize_game_history(game_history):
     wins_for_X = 0
     wins_for_O = 0
