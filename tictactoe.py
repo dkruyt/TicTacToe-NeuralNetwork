@@ -54,20 +54,12 @@ def print_board(board):
     print()
 
 def epsilon_greedy_move(model, board, epsilon):
-    """
-    Choose an action using an epsilon-greedy strategy.
-    - With probability epsilon, make a random move.
-    - With probability 1 - epsilon, make a move based on the model's prediction.
-    """
     if random.random() < epsilon:
-        # Make a random move
         valid_moves = [i for i in range(9) if board[i] == 0]
         return random.choice(valid_moves)
     else:
-        # Make a move based on the model's prediction
         board_state = np.array([board])
         predictions = model.predict(board_state)[0]
-        # Set the prediction for occupied spots to a large negative value
         for i in range(9):
             if board[i] != 0:
                 predictions[i] = -1e7
@@ -76,11 +68,10 @@ def epsilon_greedy_move(model, board, epsilon):
 def update_model(model, game_history, winner):
     for board_state, move in game_history:
         target = np.zeros(9)
-        if winner == 1:  # If 'X' won
-            target[move] = 1.0  # Reinforce the move if it was made by 'X'
-        elif winner == -1:  # If 'O' won
-            target[move] = -1.0  # Penalize the move if it was made by 'X'
-
+        if winner == 1:
+            target[move] = 1.0
+        elif winner == -1:
+            target[move] = -1.0
         model.fit(np.array([board_state]), np.array([target]), verbose=0, batch_size=32)
 
 
@@ -104,13 +95,17 @@ def simulate_game_and_train(model, epsilon):
     board = [0]*9
     player = starting_player
     global game_history
+    global wins_for_X
+    global wins_for_O
+    global draws
 
     while True:
 
         clear_screen()
-        print_board(board)
         print("Player", 'O' if player == -1 else 'X', "'s turn")
-        time.sleep(0.1)  # Pauses the program
+        print()
+        print_board(board)
+        time.sleep(0.5)  # Pauses the program
     
         # Use epsilon-greedy strategy for move selection
         move = epsilon_greedy_move(model, board, epsilon)
@@ -126,20 +121,34 @@ def simulate_game_and_train(model, epsilon):
         # Check for game end
         winner = check_winner(board)
         if winner != 0:
+            clear_screen()
+            print("Player", 'O' if player == -1 else 'X', "'s turn")
+            print()
             print_board(board)
-            print(f"Winner: {'X' if winner == 1 else 'O' if winner == -1 else 'Draw'}")
+            # Update counters
+            if winner == 1:
+                wins_for_X += 1
+            elif winner == -1:
+                wins_for_O += 1
+            elif winner == 2:
+                draws += 1
+
+            # Print game number and statistics
+            print(f"Starting Player: {Fore.RED + 'X' if starting_player == 1 else Fore.GREEN + 'O'}" + Style.RESET_ALL)
+            print(f"Game {game_number}: Winner - {Fore.RED + 'X' if winner == 1 else Fore.GREEN + 'O' if winner == -1 else 'Draw'}" + Style.RESET_ALL)
+            print(f"Total: {game_number}, Wins for X: {wins_for_X}, Wins for O: {wins_for_O}, Draws: {draws}\n")
+            
             update_model(model, game_history, winner)
             return winner
         player = switch_player(player)
 
-# Neural network model
+# Neural network model with linear output layer activation
 model = keras.Sequential([
     layers.Dense(64, activation='relu', input_shape=(9,)),
     layers.Dense(64, activation='relu'),
-    layers.Dense(9, activation='softmax')  # Output layer with one node for each board position
+    layers.Dense(9, activation='linear')  # Linear activation for output layer
 ])
 
-# Compile the model
 model.compile(optimizer='adam', loss='mean_squared_error')
 
 # Load training data if exists
@@ -176,21 +185,6 @@ for game_number in range(1, n_games + 1):
 
     # Update epsilon
     epsilon = max(epsilon_end, epsilon_decay * epsilon)
-
-    # Update counters
-    if winner == 1:
-        wins_for_X += 1
-    elif winner == -1:
-        wins_for_O += 1
-    elif winner == 2:
-        draws += 1
-
-    # Print game number and statistics
-    print(f"Starting Player: {Fore.RED + 'X' if starting_player == 1 else Fore.GREEN + 'O'}" + Style.RESET_ALL)
-    print(f"Game {game_number}: Winner - {Fore.RED + 'X' if winner == 1 else Fore.GREEN + 'O' if winner == -1 else 'Draw'}" + Style.RESET_ALL)
-    print(f"Total: {game_number}, Wins for X: {wins_for_X}, Wins for O: {wins_for_O}, Draws: {draws}\n")
-    #time.sleep(2)  # Pauses the program
-
 
     # Switch starting player for the next game
     starting_player = -starting_player
