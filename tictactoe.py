@@ -6,6 +6,7 @@ from tensorflow.keras import layers
 import pickle
 from colorama import Fore, Back, Style
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 from IPython.display import clear_output
 import os
 import time
@@ -174,33 +175,59 @@ def visualize_detailed_network(model, input_data, output_data):
     v_spacing = (1.0 / float(max(layer_sizes))) * 0.8
     h_spacing = 0.8 / float(n_layers - 1)
 
-    # Input-Arrows
-    input_arrows_x = np.linspace(0, 0.1, input_data.shape[1])
-    input_arrows_y = np.linspace(0, 1, input_data.shape[1], endpoint=False) + v_spacing / 2.
-    for i, y in zip(input_data[0], input_arrows_y):
-        nn_ax.arrow(0, y, 0.1, 0, head_width=0.02, head_length=0.02, fc='green', ec='green')
-        nn_ax.text(-0.05, y, f'{i:.2f}', ha='right', va='center', fontsize=10)
+    # Define the rainbow colormap
+    rainbow = cm.get_cmap('winter')
+
+    # Layer colors
+    layer_colors = ['green', 'blue', 'purple', 'pink', 'red']
+
+    # Input-Arrows and Symbols
+    for i, y in zip(input_data[0], np.linspace(0, 1, input_data.shape[1], endpoint=False) + v_spacing / 2.):
+        nn_ax.arrow(-0.10, y, 0.05, 0, head_width=0.02, head_length=0.02, fc='green', ec='green')
+        
+        # Display the input value as an integer
+        input_value = int(i)
+        nn_ax.text(-0.12, y, f'{input_value}', ha='right', va='center', fontsize=10)
+
+        # Conditional symbols next to the input value
+        if i == 1.0:
+            nn_ax.text(-0.17, y, 'X', ha='left', va='center', fontsize=20, color='red')
+        elif i == -1.0:
+            nn_ax.text(-0.17, y, 'O', ha='left', va='center', fontsize=20, color='green')
 
     # Neurons and Connections
     for n, layer_size in enumerate(layer_sizes):
         layer_x = n * h_spacing
-        layer_y = np.linspace(0, 1, layer_size, endpoint=False) + v_spacing / 2.
-        for i, neuron_y in enumerate(layer_y):
-            circle = plt.Circle((layer_x, neuron_y), v_spacing/4., color='w', ec='k', zorder=4)
+        if layer_size > 16:
+            displayed_neurons = 16
+            middle_neurons = [6, 7, 8, 9]
+        else:
+            displayed_neurons = layer_size
+            middle_neurons = []
+
+        for i, neuron_y in enumerate(np.linspace(0, 1, displayed_neurons, endpoint=False) + v_spacing / 2.):
+            neuron_color = 'white' if i in middle_neurons and layer_size > 16 else layer_colors[n % len(layer_colors)]
+            circle = plt.Circle((layer_x, neuron_y), v_spacing/2. * 1.5, color=neuron_color, ec='k', zorder=4)
             nn_ax.add_artist(circle)
 
-            if n > 0:  # Not input layer
-                for prev_neuron_y in np.linspace(0, 1, layer_sizes[n - 1], endpoint=False) + v_spacing / 2.:
-                    line = plt.Line2D([layer_x - h_spacing, layer_x], [prev_neuron_y, neuron_y], c='gray')
+            if n > 0:
+                for j, prev_neuron_y in enumerate(np.linspace(0, 1, layer_sizes[n - 1], endpoint=False) + v_spacing / 2.):
+                    color = rainbow(float(i + j) / (displayed_neurons + layer_sizes[n - 1]))
+                    line = plt.Line2D([layer_x - h_spacing, layer_x], [prev_neuron_y, neuron_y], c=color, alpha=0.7)
                     nn_ax.add_artist(line)
 
     # Output-Values
-    if output_data is not None:
-        output_arrows_x = np.linspace(1 - 0.1, 1, output_data.shape[1])
-        output_arrows_y = np.linspace(0, 1, output_data.shape[1], endpoint=False) + v_spacing / 2.
-        for i, y in zip(output_data[0], output_arrows_y):
-            nn_ax.arrow(1 - 0.1, y, 0.1, 0, head_width=0.02, head_length=0.02, fc='red', ec='red')
-            nn_ax.text(1.05, y, f'{i:.2f}', ha='left', va='center', fontsize=10)
+    for i, y in zip(output_data[0], np.linspace(0, 1, output_data.shape[1], endpoint=False) + v_spacing / 2.):
+        nn_ax.arrow(1 - 0.18, y, 0.05, 0, head_width=0.02, head_length=0.02, fc='red', ec='red')
+        nn_ax.text(0.90, y, f'{i:.2f}', ha='left', va='center', fontsize=10)
+
+    # Adding layer names and neuron counts to the visualization
+    for n, layer in enumerate(model.layers):
+        layer_x = n * h_spacing
+        layer_name = layer.name
+        nn_ax.text(layer_x, 1.05, layer_name, ha='center', va='center', fontsize=12)
+        neuron_count = layer_sizes[n]
+        nn_ax.text(layer_x, 1.02, f'({neuron_count} neurons)', ha='center', va='center', fontsize=10)
 
     nn_ax.axis('off')
     plt.show()
@@ -483,8 +510,9 @@ else:
 
 initial_weights = model.get_weights()
 
-# After model is created or loaded
-visualize_model_weights_and_biases(model)
+if args.show_visuals:
+    # After model is created or loaded
+    visualize_model_weights_and_biases(model)
 
 # Just a sleep show you can read the model summary
 time.sleep(5)  # Pauses the program
@@ -531,11 +559,10 @@ for game_number in range(1, n_games + 1):
     # Switch starting player for the next game
     starting_player = -starting_player
 
-    if args.delay:
-        time.sleep(5)  # Pauses the program
-    
-    if (args.human_player == 'X') or (args.human_player == 'O'):
-        time.sleep(3)  # Pauses the program
+    # Apply a 3-second delay if either 'delay' is enabled or a human player is playing
+    if args.delay or args.human_player in ['X', 'O']:
+        time.sleep(3)  # Pauses the program for 3 seconds
+
 
 # Get new weights after training
 new_weights = model.get_weights()
