@@ -101,6 +101,94 @@ def visualize_output_layer(output_layer_activation, board, colormap='autumn'):
     plt.draw()
     plt.pause(0.1)  # Adjust the pause time as needed
 
+# Global variable to keep track of figures
+weight_figures = {}
+
+def visualize_model_weights_and_biases(model):
+    global weight_figures
+
+    for i, layer in enumerate(model.layers):
+        weights_biases = layer.get_weights()
+        if len(weights_biases) > 0:
+            weights, biases = weights_biases
+
+            # Visualize Weights
+            if i not in weight_figures:
+                weight_figures[i] = plt.figure(figsize=(12, 4))
+
+            plt.figure(weight_figures[i].number)
+            plt.clf()  # Clear the current figure
+
+            plt.subplot(1, 2, 1)
+            plt.imshow(weights, aspect='auto', cmap='viridis')
+            plt.colorbar()
+            plt.title(f"Weights of Layer {i+1}: {layer.name}")
+            plt.xlabel('Neurons in the following layer')
+            plt.ylabel('Neurons in the current layer')
+
+            # Visualize Biases
+            plt.subplot(1, 2, 2)
+            plt.plot(biases)
+            plt.title(f"Biases of Layer {i+1}: {layer.name}")
+            plt.xlabel('Neurons')
+            plt.ylabel('Bias Value')
+
+            plt.draw()
+            plt.pause(0.001)  # Pause to update the figure
+
+# Global variables for the figure and axes
+global nn_fig, nn_ax
+
+def visualize_detailed_network(model, input_data, output_data):
+    global nn_fig, nn_ax
+
+    # Determine layer sizes
+    layer_sizes = [input_data.shape[1]] + \
+                  [layer.units for layer in model.layers if hasattr(layer, 'units')] + \
+                  [output_data.shape[1]]
+    
+    # Create or clear the figure and axes
+    if 'nn_fig' not in globals():
+        nn_fig, nn_ax = plt.subplots(figsize=(12, 8))
+    else:
+        nn_ax.clear()
+
+    n_layers = len(layer_sizes)
+    v_spacing = (1.0 / float(max(layer_sizes))) * 0.8
+    h_spacing = 0.8 / float(n_layers - 1)
+
+    # Input-Arrows
+    input_arrows_x = np.linspace(0, 0.1, input_data.shape[1])
+    input_arrows_y = np.linspace(0, 1, input_data.shape[1], endpoint=False) + v_spacing / 2.
+    for i, y in zip(input_data[0], input_arrows_y):
+        nn_ax.arrow(0, y, 0.1, 0, head_width=0.02, head_length=0.02, fc='green', ec='green')
+        nn_ax.text(-0.05, y, f'{i:.2f}', ha='right', va='center', fontsize=10)
+
+    # Neurons and Connections
+    for n, layer_size in enumerate(layer_sizes):
+        layer_x = n * h_spacing
+        layer_y = np.linspace(0, 1, layer_size, endpoint=False) + v_spacing / 2.
+        for i, neuron_y in enumerate(layer_y):
+            circle = plt.Circle((layer_x, neuron_y), v_spacing/4., color='w', ec='k', zorder=4)
+            nn_ax.add_artist(circle)
+
+            if n > 0:  # Not input layer
+                for prev_neuron_y in np.linspace(0, 1, layer_sizes[n - 1], endpoint=False) + v_spacing / 2.:
+                    line = plt.Line2D([layer_x - h_spacing, layer_x], [prev_neuron_y, neuron_y], c='gray')
+                    nn_ax.add_artist(line)
+
+    # Output-Values
+    if output_data is not None:
+        output_arrows_x = np.linspace(1 - 0.1, 1, output_data.shape[1])
+        output_arrows_y = np.linspace(0, 1, output_data.shape[1], endpoint=False) + v_spacing / 2.
+        for i, y in zip(output_data[0], output_arrows_y):
+            nn_ax.arrow(1 - 0.1, y, 0.1, 0, head_width=0.02, head_length=0.02, fc='red', ec='red')
+            nn_ax.text(1.05, y, f'{i:.2f}', ha='left', va='center', fontsize=10)
+
+    nn_ax.axis('off')
+    plt.show()
+    plt.pause(0.001)  # Pause to update the figure
+
 def clear_screen():
     if platform.system() == "Windows":
         os.system('cls')
@@ -246,10 +334,12 @@ def simulate_game_and_train(model, epsilon):
             print_board(board)
 
         board_state = np.array([board])
-        predictions = model.predict(board_state, verbose=0)[0]
+        predictions = model.predict(board_state, verbose=0)
         if args.show_visuals:
             visualize_input_layer(board, game_number, wins_for_X, wins_for_O, draws)
             visualize_output_layer(predictions, board)
+
+            visualize_detailed_network(model, board_state , predictions)
 
         # Determine the move based on player type
         if (args.human_player == 'X' and player == 1) or (args.human_player == 'O' and player == -1):
@@ -311,9 +401,9 @@ if os.path.exists('tic_tac_toe_model.keras'):
 else:
     # Define and compile the model as before if it doesn't exist
     model = keras.Sequential([
-        layers.Dense(64, activation='relu', input_shape=(9,)),
+        layers.Dense(32, activation='relu', input_shape=(9,)),
         layers.Dropout(0.1),  # Dropout layer
-        layers.Dense(64, activation='relu'),
+        layers.Dense(32, activation='relu'),
         layers.Dropout(0.1),  # Another dropout layer
         layers.Dense(9, activation='linear')
     ])
@@ -322,6 +412,9 @@ else:
     model.summary()  # Print the summary of the new model
 
 initial_weights = model.get_weights()
+
+# After model is created or loaded
+visualize_model_weights_and_biases(model)
 
 # Just a sleep show you can read the model summary
 time.sleep(5)  # Pauses the program
@@ -352,6 +445,7 @@ for game_number in range(1, n_games + 1):
     if game_number % batch_size == 0 or game_number == n_games:
         print(f"update model")
         update_model(model, batch_game_history)
+        visualize_model_weights_and_biases(model)
         batch_game_history = []  # Reset for the next batch
 
     # Update epsilon
