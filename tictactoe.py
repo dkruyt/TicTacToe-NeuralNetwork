@@ -15,11 +15,28 @@ import argparse
 
 # Set up the argument parser
 parser = argparse.ArgumentParser(description='Run Tic-Tac-Toe game with optional visuals.')
-parser.add_argument('--show-visuals', action='store_true', help='Enable game visuals')
-parser.add_argument('--show-text', action='store_true', help='Enable game text')
-parser.add_argument('--delay', action='store_true', help='add delay')
-parser.add_argument('--human-player', type=str, choices=['X', 'O', 'None'], default='None', help='Play as a human player with X or O, or None for AI vs AI')
-parser.add_argument('--games', type=int, default=10, help='Number of games to play')
+parser.add_argument('--show-visuals', action='store_true', 
+                    help='Enable game visuals (default: False)')
+parser.add_argument('--show-text', action='store_true', 
+                    help='Enable game text (default: False)')
+parser.add_argument('--delay', action='store_true', 
+                    help='Add delay (default: False)')
+parser.add_argument('--human-player', type=str, choices=['X', 'O', 'None'], default='None', 
+                    help='Play as a human player with X or O, or None for AI vs AI (default: None)')
+parser.add_argument('--games', type=int, default=10, 
+                    help='Number of games to play (default: 10)')
+parser.add_argument('--model-name', type=str, default='tic_tac_toe_model.keras', 
+                    help='Filename for saving/loading the model (default: tic_tac_toe_model.keras)')
+parser.add_argument('--dense-units', type=int, default=32, 
+                    help='Number of units in the Dense layers (default: 32)')
+parser.add_argument('--dropout-rate', type=float, default=0.1, 
+                    help='Dropout rate for the Dropout layers (default: 0.1)')
+parser.add_argument('--epsilon-start', type=float, default=1.0, 
+                    help='Starting value of epsilon for epsilon-greedy strategy (default: 1.0)')
+parser.add_argument('--epsilon-end', type=float, default=0.1, 
+                    help='Ending value of epsilon for epsilon-greedy strategy (default: 0.1)')
+parser.add_argument('--epsilon-decay', type=float, default=0.99, 
+                    help='Decay rate of epsilon after each game (default: 0.99)')
 
 args = parser.parse_args()
 
@@ -393,18 +410,18 @@ def simulate_game_and_train(model, epsilon):
         player = switch_player(player)
 
 # Neural network model with linear output layer activation
-if os.path.exists('tic_tac_toe_model.keras'):
-    model = tf.keras.models.load_model('tic_tac_toe_model.keras')
+if os.path.exists(args.model_name):
+    model = tf.keras.models.load_model(args.model_name)
     print("Model loaded successfully.")
     model.summary()  # Print the summary of the model
 
 else:
     # Define and compile the model as before if it doesn't exist
     model = keras.Sequential([
-        layers.Dense(32, activation='relu', input_shape=(9,)),
-        layers.Dropout(0.1),  # Dropout layer
-        layers.Dense(32, activation='relu'),
-        layers.Dropout(0.1),  # Another dropout layer
+        layers.Dense(args.dense_units, activation='relu', input_shape=(9,)),
+        layers.Dropout(args.dropout_rate),
+        layers.Dense(args.dense_units, activation='relu'),
+        layers.Dropout(args.dropout_rate),
         layers.Dense(9, activation='linear')
     ])
     model.compile(optimizer='adam', loss='mean_squared_error')
@@ -429,9 +446,9 @@ wins_for_X = 0
 wins_for_O = 0
 draws = 0
 
-epsilon_start = 1.0
-epsilon_end = 0.1
-epsilon_decay = 0.99
+epsilon_start = args.epsilon_start
+epsilon_end = args.epsilon_end
+epsilon_decay = args.epsilon_decay
 epsilon = epsilon_start
 
 batch_size = 10  # Define the number of games after which model will be updated
@@ -475,4 +492,4 @@ else:
 weight_changes = [np.mean(np.abs(w_new - w_initial)) for w_initial, w_new in zip(initial_weights, new_weights)]
 print("Mean absolute changes in weights per layer:", weight_changes)
 
-model.save('tic_tac_toe_model.keras')  # Saves the model in Keras format
+model.save(args.model_name)  # Saves the model in Keras format
