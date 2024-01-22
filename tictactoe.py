@@ -206,6 +206,59 @@ def visualize_detailed_network(model, input_data, output_data):
     plt.show()
     plt.pause(0.001)  # Pause to update the figure
 
+global stats_fig, stats_ax, stats_bars
+
+def plot_game_statistics(wins_for_X, wins_for_O, draws):
+    global stats_fig, stats_ax, stats_bars
+
+    labels = ['Wins for X', 'Wins for O', 'Draws']
+    values = [wins_for_X, wins_for_O, draws]
+    colors = ['red', 'green', 'yellow']
+
+    if 'stats_fig' not in globals():
+        stats_fig, stats_ax = plt.subplots(figsize=(8, 5))
+        stats_bars = stats_ax.bar(labels, values, color=colors)
+        stats_ax.set_title('Game Outcomes')
+        stats_ax.set_xlabel('Outcome')
+        stats_ax.set_ylabel('Number of Games')
+    else:
+        for bar, new_value in zip(stats_bars, values):
+            bar.set_height(new_value)
+            bar.set_y(new_value)
+
+    # Update value labels
+    for bar, new_value in zip(stats_bars, values):
+        height = bar.get_height()
+        stats_ax.text(bar.get_x() + bar.get_width() / 2.0, height, str(new_value), ha='center', va='bottom')
+
+    plt.draw()
+    plt.pause(0.001)  # Pause to update the plot
+
+global epsilon_fig, epsilon_ax, epsilon_line
+
+def plot_epsilon_value(epsilon_value, game_number, total_games):
+    global epsilon_fig, epsilon_ax, epsilon_line
+
+    # Create the figure and axis if they don't exist
+    if 'epsilon_fig' not in globals():
+        epsilon_fig, epsilon_ax = plt.subplots(figsize=(10, 4))
+        epsilon_line, = epsilon_ax.plot([], [], 'r-')  # Red line for epsilon value
+        epsilon_ax.set_xlim(0, total_games)
+        epsilon_ax.set_ylim(0, 1)  # Epsilon values are typically between 0 and 1
+        epsilon_ax.set_xlabel('Game Number')
+        epsilon_ax.set_ylabel('Epsilon Value')
+        epsilon_ax.set_title('Epsilon Value Over Time')
+
+    # Update the data
+    x_data, y_data = epsilon_line.get_data()
+    x_data = np.append(x_data, game_number)
+    y_data = np.append(y_data, epsilon_value)
+    epsilon_line.set_data(x_data, y_data)
+
+    # Redraw the plot
+    epsilon_fig.canvas.draw()
+    plt.pause(0.001)  # Pause to update the plot
+
 def clear_screen():
     if platform.system() == "Windows":
         os.system('cls')
@@ -462,11 +515,18 @@ for game_number in range(1, n_games + 1):
     if game_number % batch_size == 0 or game_number == n_games:
         print(f"update model")
         update_model(model, batch_game_history)
-        visualize_model_weights_and_biases(model)
+        if args.show_visuals:
+            visualize_model_weights_and_biases(model)
+
         batch_game_history = []  # Reset for the next batch
 
     # Update epsilon
     epsilon = max(epsilon_end, epsilon_decay * epsilon)
+
+    if args.show_visuals:
+        plot_game_statistics(wins_for_X, wins_for_O, draws)
+        # Update the epsilon plot
+        plot_epsilon_value(epsilon, game_number, n_games)
 
     # Switch starting player for the next game
     starting_player = -starting_player
