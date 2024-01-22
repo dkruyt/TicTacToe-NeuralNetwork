@@ -29,7 +29,7 @@ parser.add_argument('--games', type=int, default=10,
 parser.add_argument('--model-name', type=str, default='tic_tac_toe_model.keras', 
                     help='Filename for saving/loading the model (default: tic_tac_toe_model.keras)')
 parser.add_argument('--dense-units', type=int, default=32, 
-                    help='Number of units in the Dense layers (default: 32)')
+                    help='Number of Neurons in the Dense layers (default: 32)')
 parser.add_argument('--dropout-rate', type=float, default=0.1, 
                     help='Dropout rate for the Dropout layers (default: 0.1)')
 parser.add_argument('--epsilon-start', type=float, default=1.0, 
@@ -176,7 +176,7 @@ def visualize_detailed_network(model, input_data, output_data):
     h_spacing = 0.8 / float(n_layers - 1)
 
     # Define the rainbow colormap
-    rainbow = cm.get_cmap('winter')
+    rainbow = plt.colormaps.get_cmap('winter')
 
     # Layer colors
     layer_colors = ['green', 'blue', 'purple', 'pink', 'red']
@@ -236,7 +236,7 @@ def visualize_detailed_network(model, input_data, output_data):
 global stats_fig, stats_ax, stats_bars
 
 def plot_game_statistics(wins_for_X, wins_for_O, draws):
-    global stats_fig, stats_ax, stats_bars
+    global stats_fig, stats_ax
 
     labels = ['Wins for X', 'Wins for O', 'Draws']
     values = [wins_for_X, wins_for_O, draws]
@@ -244,19 +244,12 @@ def plot_game_statistics(wins_for_X, wins_for_O, draws):
 
     if 'stats_fig' not in globals():
         stats_fig, stats_ax = plt.subplots(figsize=(8, 5))
-        stats_bars = stats_ax.bar(labels, values, color=colors)
-        stats_ax.set_title('Game Outcomes')
-        stats_ax.set_xlabel('Outcome')
-        stats_ax.set_ylabel('Number of Games')
     else:
-        for bar, new_value in zip(stats_bars, values):
-            bar.set_height(new_value)
-            bar.set_y(new_value)
+        stats_ax.clear()  # Clear the axes for the new plot
 
-    # Update value labels
-    for bar, new_value in zip(stats_bars, values):
-        height = bar.get_height()
-        stats_ax.text(bar.get_x() + bar.get_width() / 2.0, height, str(new_value), ha='center', va='bottom')
+    # Create a pie chart
+    stats_ax.pie(values, labels=labels, colors=colors, autopct='%1.1f%%', startangle=140)
+    stats_ax.set_title('Game Outcomes')
 
     plt.draw()
     plt.pause(0.001)  # Pause to update the plot
@@ -498,11 +491,11 @@ if os.path.exists(args.model_name):
 else:
     # Define and compile the model as before if it doesn't exist
     model = keras.Sequential([
-        layers.Dense(args.dense_units, activation='relu', input_shape=(9,)),
-        layers.Dropout(args.dropout_rate),
-        layers.Dense(args.dense_units, activation='relu'),
-        layers.Dropout(args.dropout_rate),
-        layers.Dense(9, activation='linear')
+        layers.Dense(args.dense_units, activation='relu', input_shape=(9,), name='hidden_layer_1'),
+        layers.Dropout(args.dropout_rate, name='dropout_1'),
+        layers.Dense(args.dense_units, activation='relu', name='hidden_layer_2'),
+        layers.Dropout(args.dropout_rate, name='dropout_2'),
+        layers.Dense(9, activation='linear', name='output_layer')
     ])
     model.compile(optimizer='adam', loss='mean_squared_error')
     print("New model created.")
