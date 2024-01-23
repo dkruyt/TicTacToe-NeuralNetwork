@@ -3,7 +3,6 @@ import random
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
-import pickle
 from colorama import Fore, Back, Style
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
@@ -12,7 +11,6 @@ import os
 import time
 import platform
 import argparse
-
 
 # Set up the argument parser
 parser = argparse.ArgumentParser(description='Run Tic-Tac-Toe game with optional visuals.')
@@ -30,8 +28,8 @@ parser.add_argument('--model-name', type=str, default='tic_tac_toe_model.keras',
                     help='Filename for saving/loading the model (default: tic_tac_toe_model.keras)')
 parser.add_argument('--dense-units', type=int, default=32, 
                     help='Number of Neurons in the Dense layers (default: 32)')
-parser.add_argument('--dropout-rate', type=float, default=0.1, 
-                    help='Dropout rate for the Dropout layers (default: 0.1)')
+parser.add_argument('--dropout-rate', type=float, default=0.2, 
+                    help='Dropout rate for the Dropout layers (default: 0.2)')
 parser.add_argument('--epsilon-start', type=float, default=1.0, 
                     help='Starting value of epsilon for epsilon-greedy strategy (default: 1.0)')
 parser.add_argument('--epsilon-end', type=float, default=0.1, 
@@ -41,11 +39,31 @@ parser.add_argument('--epsilon-decay', type=float, default=0.99,
 
 args = parser.parse_args()
 
-# Ensure interactive mode is on for live updating of plots
-plt.ion()
+def print_tensorflow_info():
+    print(f"TensorFlow Version: {tf.__version__}")
+    devices = tf.config.list_physical_devices()
+    if not devices:
+        print("No physical devices found.")
+    else:
+        print("Found the following physical devices:")
+        for idx, device in enumerate(devices):
+            print(f"  Device {idx + 1}:")
+            print(f"    Type: {device.device_type}")
+            print(f"    Name: {device.name}")
+            if device.device_type == 'GPU':
+                details = tf.config.experimental.get_device_details(device)
+                print(f"    Compute Capability: {details.get('compute_capability', 'N/A')}")
+                print(f"    Memory: {device.memory_limit_bytes / (1024**3):.2f} GB")
 
-figi, axi = plt.subplots()
-figo, axo = plt.subplots()
+print_tensorflow_info()
+
+# Conditional execution based on --show-visuals argument
+if (args.show_visuals) or (args.human_player):
+    # Ensure interactive mode is on for live updating of plots
+    plt.ion()
+    figi, axi = plt.subplots()
+    if (args.show_visuals):
+        figo, axo = plt.subplots()
 
 # Define a function to visualize the input layer of the neural network
 def visualize_input_layer(input_layer, game_number, wins_for_X, wins_for_O, draws):
@@ -426,18 +444,15 @@ def simulate_game_and_train(model, epsilon):
         board_state = np.array([board])
         predictions = model.predict(board_state, verbose=0)
         if args.show_visuals:
-            visualize_input_layer(board, game_number, wins_for_X, wins_for_O, draws)
             visualize_output_layer(predictions, board)
-
             visualize_detailed_network(model, board_state , predictions)
+        if (args.human_player == 'X') or (args.human_player == 'O') or (args.show_visuals):
+            visualize_input_layer(board, game_number, wins_for_X, wins_for_O, draws)
 
         # Determine the move based on player type
         if (args.human_player == 'X' and player == 1) or (args.human_player == 'O' and player == -1):
             move = get_human_move(board)
         else:
-            if (args.human_player == 'X') or (args.human_player == 'O'):
-                visualize_input_layer(board, game_number, wins_for_X, wins_for_O, draws)
-                time.sleep(3)  # Pauses the program
              # Use epsilon-greedy strategy for move selection  
             move = epsilon_greedy_move(model, board, epsilon)
 
@@ -449,6 +464,10 @@ def simulate_game_and_train(model, epsilon):
         if not valid_move_made:
             continue  # Skip the rest if the move was invalid
 
+        if (args.human_player == 'X') or (args.human_player == 'O'):
+            visualize_input_layer(board, game_number, wins_for_X, wins_for_O, draws)
+            time.sleep(1)  # Pauses the program
+            
         # Record the move for training
         current_game_history.append((board.copy(), move))
         
@@ -496,6 +515,8 @@ else:
         layers.Dense(args.dense_units, activation='relu', name='hidden_layer_2'),
         layers.Dropout(args.dropout_rate, name='dropout_2'),
         layers.Dense(9, activation='linear', name='output_layer')
+        #layers.Dense(1, activation='tanh', name='output_layer')  # Changed to 1 output neuron with tanh activation
+
     ])
     model.compile(optimizer='adam', loss='mean_squared_error')
     print("New model created.")
@@ -506,9 +527,6 @@ initial_weights = model.get_weights()
 if args.show_visuals:
     # After model is created or loaded
     visualize_model_weights_and_biases(model)
-
-# Just a sleep show you can read the model summary
-time.sleep(5)  # Pauses the program
 
 # Train the model over multiple games
 starting_player = 1  # Start with 'X' in the first game
@@ -525,7 +543,10 @@ epsilon_end = args.epsilon_end
 epsilon_decay = args.epsilon_decay
 epsilon = epsilon_start
 
-batch_size = 10  # Define the number of games after which model will be updated
+# Define the number of games after which model will be updated
+# Set batch_size to be a tenth of n_games
+batch_size = max(1, n_games // 10)  # Ensures at least one game per batch
+
 batch_game_history = []
 
 for game_number in range(1, n_games + 1):
@@ -555,7 +576,6 @@ for game_number in range(1, n_games + 1):
     # Apply a 3-second delay if either 'delay' is enabled or a human player is playing
     if args.delay or args.human_player in ['X', 'O']:
         time.sleep(3)  # Pauses the program for 3 seconds
-
 
 # Get new weights after training
 new_weights = model.get_weights()
