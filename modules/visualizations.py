@@ -58,25 +58,31 @@ def visualize_output_layer(output_layer_activation, board, colormap='autumn'):
     clear_output(wait=True)
     axo.clear()  # Clear the axes to remove old content
 
-    output_grid = output_layer_activation.reshape((3, 3))
-    heatmap = axo.imshow(output_grid, cmap=colormap, interpolation='nearest')
+    if output_layer_activation.size == 1:
+        # Convert the numpy value to a Python scalar
+        value = output_layer_activation.item()  # Extracts the scalar value from the array
 
-    # Annotations
-    axo.set_title("Neural Network Output Layer Activation")
-    axo.set_xlabel("Column in Tic-Tac-Toe Board")
-    axo.set_ylabel("Row in Tic-Tac-Toe Board")
+        # Use the scalar value for formatting
+        axo.text(0.5, 0.5, f'{value:.2f}', ha='center', va='center', fontsize=20)
+        axo.set_title("Value Prediction")
+    else:
+        # For Policy-based model (3x3 output)
+        output_grid = output_layer_activation.reshape((3, 3))
+        heatmap = axo.imshow(output_grid, cmap=colormap, interpolation='nearest')
 
-    axo.set_aspect('equal', adjustable='box')
-    axo.set_xticks(np.arange(0, 3, 1))
-    axo.set_yticks(np.arange(0, 3, 1))
+        # Adding value annotations on each cell
+        for (i, j), value in np.ndenumerate(output_grid):
+            if board[i * 3 + j] != 0:  # Check if the move is taken
+                text_color = 'lightgray'  # Gray out the text for taken moves
+            else:
+                text_color = 'blue'  # Use a different color for available moves
+            axo.text(j, i, f'{value:.2f}', ha='center', va='center', color=text_color)
 
-    # Adding value annotations on each cell
-    for (i, j), value in np.ndenumerate(output_grid):
-        if board[i * 3 + j] != 0:  # Check if the move is taken
-            text_color = 'lightgray'  # Gray out the text for taken moves
-        else:
-            text_color = 'blue'  # Use a different color for available moves
-        axo.text(j, i, f'{value:.2f}', ha='center', va='center', color=text_color)
+        axo.set_title("Neural Network Output Layer Activation")
+        axo.set_xlabel("Column in Tic-Tac-Toe Board")
+        axo.set_ylabel("Row in Tic-Tac-Toe Board")
+        axo.set_xticks(np.arange(0, 3, 1))
+        axo.set_yticks(np.arange(0, 3, 1))
 
     # Render the plot
     plt.draw()
