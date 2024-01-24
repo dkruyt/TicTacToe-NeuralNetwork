@@ -34,8 +34,9 @@ parser.add_argument('--epsilon-end', type=float, default=0.1,
                     help='Ending value of epsilon for epsilon-greedy strategy (default: 0.1)')
 parser.add_argument('--epsilon-decay', type=float, default=0.99, 
                     help='Decay rate of epsilon after each game (default: 0.99)')
-parser.add_argument('--model-type', type=str, choices=['MLP', 'CNN', 'RNN'], default='MLP', 
-                    help='Type of model to use (MLP, CNN, RNN) (default: MLP)')
+parser.add_argument('--model-type', type=str, 
+                    choices=['MLP', 'Policy', 'Value', 'CNN', 'RNN'], default='MLP', 
+                    help='Type of model to use (MLP, Policy, Value, CNN, RNN) (default: MLP)')
 
 args = parser.parse_args()
 
@@ -173,6 +174,10 @@ else:
     input_shape = (9,)
     if args.model_type == 'MLP':
         model = create_mlp_model(input_shape, args.dense_units, args.dropout_rate)
+    elif args.model_type == 'Policy':
+        model = create_policy_mlp_model(input_shape, args.dense_units, args.dropout_rate)
+    elif args.model_type == 'Value':
+        model = create_value_mlp_model(input_shape, args.dense_units, args.dropout_rate)
     elif args.model_type == 'CNN':
         model = create_cnn_model(input_shape, args.dense_units, args.dropout_rate)
     elif args.model_type == 'RNN':
@@ -180,7 +185,6 @@ else:
     else:
         raise ValueError("Invalid model type")
 
-    model.compile(optimizer='adam', loss='mean_squared_error')
     print(f"New {args.model_type} model created.")
 
 model.summary()
@@ -228,6 +232,7 @@ for game_number in range(1, n_games + 1):
 
     # Update epsilon
     epsilon = max(epsilon_end, epsilon_decay * epsilon)
+    print(f"After Game {game_number}: Updated Epsilon Value = {epsilon:.4f}")
 
     if args.show_visuals:
         plot_game_statistics(wins_for_X, wins_for_O, draws)
