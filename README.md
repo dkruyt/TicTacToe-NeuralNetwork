@@ -51,6 +51,50 @@ python tic_tac_toe.py --games 1000 --model-type MLP --model-name mlp-model.keras
 - `--epsilon-start`, `--epsilon-end`, `--epsilon-decay`: Configure the epsilon-greedy strategy.
 - `--model-type`: Choose the type of neural network model (MLP, CNN, RNN).
 
+## Detailed Explanation of Arguments
+
+### `--show-visuals`
+- **Description**: Enable game visuals during gameplay.
+- **Impact**: Enhances the interactive experience by displaying visualizations of the neural network and game statistics. Requires an appropriate display environment like Jupyter Notebook.
+
+### `--show-text`
+- **Description**: Enable text output for game status and progress.
+- **Impact**: Useful for understanding the game's flow, especially when not using visualizations. Provides information about player turns, board state, and game outcomes.
+
+### `--delay`
+- **Description**: Add a delay after each move in the game.
+- **Impact**: Slows down the gameplay, allowing users to observe changes and decisions made by the AI after each move.
+
+### `--human-player`
+- **Description**: Specify whether a human will play (as 'X' or 'O') or set to 'None' for AI vs AI games.
+- **Impact**: Allows users to either engage directly with the AI or observe an AI vs. AI match, making the game interactive and versatile.
+
+### `--games`
+- **Description**: Set the number of games to be played in the simulation.
+- **Impact**: Controls the length of the simulation, allowing for either extensive training sessions or quick demonstrations.
+
+### `--model-name`
+- **Description**: Specify the filename for saving/loading the neural network model.
+- **Impact**: Enables persistence of the model's state across sessions, crucial for ongoing training and refinement of the AI.
+
+### `--dense-units`
+- **Description**: Determine the number of neurons in each Dense layer of the neural network.
+- **Impact**: Influences the learning capacity of the model. More neurons can increase complexity and computational requirements.
+
+### `--dropout-rate`
+- **Description**: Set the dropout rate for regularization to prevent overfitting.
+- **Impact**: Helps in generalizing the model. A high dropout rate might hinder the model's ability to learn, while a low rate might lead to overfitting.
+
+### `--epsilon-start`, `--epsilon-end`, `--epsilon-decay`
+- **Description**: Control the epsilon-greedy strategy for balancing exploration and exploitation.
+- **Impact**: Critical for effective learning. The start value sets initial exploration, end value is the lowest boundary, and decay controls the reduction rate after each game.
+
+### `--model-type`
+- **Description**: Choose the type of neural network model: MLP (Multi-Layer Perceptron), CNN (Convolutional Neural Network), or RNN (Recurrent Neural Network).
+- **Impact**: Each model type has different strengths and is suitable for various learning and pattern recognition tasks in the game.
+
+Each argument significantly influences the game simulation and AI training, affecting performance, learning effectiveness, and user experience.
+
 ## Notes
 - Ensure that you have a suitable environment for running TensorFlow, especially if using GPU acceleration.
 - The visuals are best viewed in a Jupyter Notebook or an environment that supports IPython display features live vscode.
