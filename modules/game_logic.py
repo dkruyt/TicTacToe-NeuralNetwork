@@ -47,14 +47,18 @@ def switch_player(player):
 # Function to select the next move using epsilon-greedy strategy
 def epsilon_greedy_move(model, board, epsilon):
     if random.random() < epsilon:
+        # Exploration: Choose a random move
         valid_moves = [i for i in range(9) if board[i] == 0]
+        #print("AI is exploring: Chose a random move.")
         return random.choice(valid_moves)
     else:
+        # Exploitation: Choose the best move based on model prediction
         board_state = np.array([board])
         predictions = model.predict(board_state, verbose=0)[0]
         for i in range(9):
             if board[i] != 0:
                 predictions[i] = -1e7
+        #print("AI is exploiting: Chose the best predicted move.")
         return np.argmax(predictions)
 
 def check_potential_win(board, player):
