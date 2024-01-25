@@ -1,6 +1,26 @@
 import random
 import numpy as np
 
+"""
+This script provides various functions that facilitate the gameplay and analysis of tic-tac-toe.
+
+The 'check_winner' function determines the status of the game: win for 'X' (-1), win for 'O' (1), draw (2), or game still ongoing (0).
+
+'summarize_game_history' collates the win/loss/draw statistics from a set of played games stored in game_history.
+
+'make_move' updates the game board with a valid move made by a player. The function checks whether the required cell is empty (0), if it is, the function updates the board with the player's move and returns True; if not, it simply returns False.
+
+'get_human_move' is a function for human players, which prompts them for a cell to select for the next move. It ensures the input is valid (existing cell number and not already occupied).
+
+'switch_player' is a simple utility function which switches between players after every turn - if the current player is 'X', it changes it to 'O' and vice versa.
+
+'epsilon_greedy_move' implements the epsilon-greedy strategy for choosing the next move for an RL agent. It involves a trade-off between exploitation (using what the model has learnt to take the best move) and exploration (trying out random moves).
+
+The exploration occurs with a probability of epsilon and results in a random selection of a valid cell. The exploitation move, on the other hand, involves prediction of the reward for each cell based on the current board state, and selection of the cell with the highest predicted reward.
+
+'check_potential_win' is a helper function which checks if any of the players can potentially win in the next move i.e., they have two cells in a row, column or diagonal, and can win the game if they occupy the third one.
+"""
+
 # Function to check if there is a winner or draw
 def check_winner(board):
     for i in range(3):
