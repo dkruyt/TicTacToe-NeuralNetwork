@@ -36,6 +36,10 @@ parser.add_argument('--epsilon-decay', type=float, default=0.99,
 parser.add_argument('--model-type', type=str, 
                     choices=['MLP', 'Policy', 'Value', 'CNN', 'RNN'], default='MLP', 
                     help='Type of model to use (MLP, Policy, Value, CNN, RNN) (default: MLP)')
+parser.add_argument('--reward', type=str,
+                    choices=['block', 'progress', 'penalty', 'simple', 'future'], default='progress', 
+                    help='Reward strategy')
+
 args = parser.parse_args()
 
 show_text = args.show_text
@@ -64,7 +68,17 @@ def update_model(model, batch_game_history):
     y_train = []
 
     for game_history in batch_game_history:
-        assign_rewards_progress(game_history, check_winner(game_history[-1][0]))  # Assign rewards based on game outcome
+        if args.reward == 'progress':
+            assign_rewards_progress(game_history, check_winner(game_history[-1][0]))  # Assign rewards based on game outcome
+        elif args.reward == 'block':
+            assign_rewards_block(game_history, check_winner(game_history[-1][0]))  # Assign rewards based on game outcome
+        elif args.reward == 'simple':
+            assign_rewards_simple(game_history, check_winner(game_history[-1][0]))  # Assign rewards based on game outcome
+        elif args.reward == 'penalty':
+            assign_reward_penalty(game_history, check_winner(game_history[-1][0]))  # Assign rewards based on game outcome
+        elif args.reward == 'future':
+            assign_rewards_future(game_history, check_winner(game_history[-1][0]))  # Assign rewards based on game outcome
+
         for board_state, target in game_history:
             X_train.append(board_state)
             y_train.append(target)
