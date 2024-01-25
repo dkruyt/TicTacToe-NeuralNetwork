@@ -6,6 +6,22 @@ from tensorflow import keras
 from tensorflow.keras import layers
 import numpy as np
 
+"""
+This script provides several utility functions to facilitate interactions with and visualization of a neural network model within a terminal, in the context of a tic-tac-toe game.
+
+'clear_screen' and 'cursor_topleft' are functions to clear the screen and move the cursor to the top left, preparing for fresh screen output.
+
+'print_board' displays the current state of the game board with coloured symbols for each player or an empty space.
+
+'print_output_layer' prints the activation outputs of the final layer of the model, for each possible move on the board.
+
+'plot_epsilon_value_text' prints a progress bar of gameplay along with the current epsilon value that determines the exploitation vs exploration ratio in the epsilon-greedy strategy.
+
+'print_model_weights_and_biases' prints statistics, like mean and standard deviation, of the weights and biases of each layer in the given model. If the layer is of type SimpleRNN, it splits the weights into input weights and recurrent weights.
+
+'visualize_detailed_network_text' prints the detailed structure of the neural network, displaying the type and number of neurons present in each layer. It also prints an example of the input and output data. In the context of a game, each neuron could represent a possible move. 
+"""
+
 def clear_screen():
     if platform.system() == "Windows":
         os.system('cls')

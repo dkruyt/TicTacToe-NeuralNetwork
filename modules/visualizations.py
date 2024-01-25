@@ -4,6 +4,21 @@ from IPython.display import clear_output
 from tensorflow import keras
 from tensorflow.keras import layers
 
+"""
+This code includes several functions to create visualizations for troubleshooting and analyzing the performance of a neural network for a tic-tac-toe game.
+
+'visualize_input_layer' creates a colored grid to display the input layer of the neural network which represents the current state of the game.
+
+'visualize_output_layer' visualizes the activations of the output layer of the model, highlighting the highest activation cell which corresponds to the action chosen by the model as the next move.
+
+'visualize_model_weights_and_biases' provides in-depth visualizations of the weights and biases of all layers in the provided model.
+
+'visualize_detailed_network' provides a very detailed visual representation of the entire network's structure, highlighting input and output data, connections, and neuron counts for each layer of the model.
+
+'plot_game_statistics' visualizes the game outcomes as a pie chart, presenting the percentages of wins for each player and draws.
+
+'plot_epsilon_value' plots how the value of epsilon changes over time, which provides insight into how the balance of exploration and exploitation in the epsilon-greedy strategy evolves through the course of the games.
+"""
 
 # Ensure interactive mode is on for live updating of plots
 plt.ion()

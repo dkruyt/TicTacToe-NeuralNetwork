@@ -1,6 +1,24 @@
 import numpy as np
 import random
 
+"""
+This section of code defines several strategies of assigning rewards (and penalties) to the states and actions in a game of tic-tac-toe, for the purpose of training a reinforcement learning agent.
+
+Firstly, 'assign_rewards_simple' is the most basic strategy that rewards winning and penalizes losing. The rewards are discounted back from the winning move - the closer the move is to the end of the game, the lower the discount. This is based on the premise that moves closer to winning are more valuable.
+
+Secondly, 'assign_reward_penalty' has a similar approach, but additionally includes a small penalty for each move made to encourage quicker wins.
+
+Next, 'assign_rewards_block' assigns an additional reward to moves that block the opponent from winning. If such a move is made, the reward for this move is updated to reward_for_block and other behaviors remain the same as 'assign_rewards_simple'.
+
+Following 'assign_rewards_block' is 'assign_rewards_progress'. This strategy functions similarly to 'assign_rewards_simple', but includes incremental rewards for each move leading to a win, encouraging moves that progress the game towards a win.
+
+Finally, 'assign_rewards_future' introduces predictive rewards for moves that can potentially lead to a win in the future - encouraging foresight in the agent's strategy.
+
+The functions 'check_potential_win' and 'check_future_win' are utility functions used by reward assignment functions. 'check_potential_win' checks if either player has two in a row and thus can win in the next move, while 'check_future_win' checks if a given move can lead to a potential win in the next move by iterating through the possible following moves.
+
+All of these strategies are different approaches towards teaching an AI to play the game optimally and can be used depending on the specific situation or the complexity of the game.
+"""
+
 # Function to assign improved rewards based on game outcome
 def assign_rewards_simple(game_history, winner):
     reward_for_win = 1.0
