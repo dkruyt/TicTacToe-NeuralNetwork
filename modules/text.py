@@ -4,13 +4,16 @@ from colorama import Fore, Back, Style
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
-
+import numpy as np
 
 def clear_screen():
     if platform.system() == "Windows":
         os.system('cls')
     else:
         os.system('clear')
+        
+def cursor_topleft():
+    print("\033[H", end='')
 
 # Function to print the current state of the board
 def print_board(board):
@@ -38,7 +41,7 @@ def print_output_layer(output_layer_activation, board):
                 value = output_grid[i, j]
                 if board[i * 3 + j] != 0:  # Check if the move is taken
                     symbol = Fore.RED + 'X' if board[i * 3 + j] == 1 else Fore.GREEN + 'O'
-                    print(f"[{i},{j}]: {symbol} (Taken){Style.RESET_ALL}", end='  ')
+                    print(f"[{i},{j}]: {symbol}   {Style.RESET_ALL}", end='  ')
                 else:
                     print(f"[{i},{j}]: {Fore.BLUE}{value:.2f}{Style.RESET_ALL}", end='  ')
             print()  # New line after each row
@@ -59,7 +62,7 @@ def plot_epsilon_value_text(epsilon_value, game_number, total_games):
     # Print the progress bar with the current game number, total games, and epsilon value
     print(f"Game {game_number} of {total_games} {progress_bar} Epsilon: {epsilon_value:.4f}")
 
-def visualize_model_weights_and_biases_text(model):
+def print_model_weights_and_biases(model):
     for i, layer in enumerate(model.layers):
         weights_biases = layer.get_weights()
         if len(weights_biases) > 0:
@@ -80,3 +83,54 @@ def visualize_model_weights_and_biases_text(model):
                 print(f"  Recurrent Weights: Mean = {recurrent_weights.mean():.4f}, Std = {recurrent_weights.std():.4f}, Min = {recurrent_weights.min():.4f}, Max = {recurrent_weights.max():.4f}")
                 print(f"  Biases: Mean = {biases.mean():.4f}, Std = {biases.std():.4f}, Min = {biases.min():.4f}, Max = {biases.max():.4f}")
 
+def visualize_detailed_network_text(model, input_data, output_data):
+    # Initialize layer_sizes with the size of the input data
+    layer_sizes = [np.prod(input_data.shape[1:])]
+
+    for layer in model.layers:
+        if hasattr(layer, 'units'):  # For Dense layers
+            layer_sizes.append(layer.units)
+        elif isinstance(layer, keras.layers.Conv2D):  # For Conv2D layers
+            layer_sizes.append(layer.filters)
+        elif isinstance(layer, keras.layers.Flatten) or isinstance(layer, keras.layers.Reshape):
+            layer_sizes.append(np.prod(layer.output_shape[1:]))
+        else:
+            continue  # Skip other layer types in size calculation
+
+    # Add the size of the output data
+    layer_sizes.append(np.prod(output_data.shape[1:]))
+
+    print("Detailed Neural Network Structure:")
+    print("==================================")
+
+    # Input Layer
+    print(f"Input Layer: {layer_sizes[0]} neurons (features)")
+    
+
+    # Iterate over all layers to determine their sizes
+    for layer in model.layers:
+        if isinstance(layer, keras.layers.Dense) or isinstance(layer, keras.layers.SimpleRNN):
+            layer_sizes.append(layer.units)
+        elif isinstance(layer, keras.layers.Conv2D):
+            layer_sizes.append(layer.filters)
+        elif isinstance(layer, keras.layers.Flatten) or isinstance(layer, keras.layers.Reshape):
+            layer_sizes.append(np.prod(layer.output_shape[1:]))
+        else:
+            # For layers like Dropout, use the size of the previous layer
+            layer_sizes.append(layer_sizes[-1])
+
+    # Ensure the output layer size is added
+    layer_sizes.append(np.prod(output_data.shape[1:]))
+
+    # Now, iterate over the layers for printing details
+    for i, layer in enumerate(model.layers):
+        layer_type = type(layer).__name__
+        layer_description = f"{layer_type} Layer with {layer_sizes[i+1]} neurons"
+        print(layer_description)
+
+    # Output Layer
+    print(f"Output Layer: {layer_sizes[-1]} neurons (output size)")
+
+    # Displaying the first few input and output data values as examples
+    print("\nExample Input Data: ", input_data[0][:5])
+    print("Example Output Data: ", output_data[0][:5])

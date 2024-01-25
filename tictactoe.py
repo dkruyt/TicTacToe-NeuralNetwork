@@ -1,5 +1,6 @@
 import time
 import argparse
+from art import *
 
 ## Local stuff
 from modules.model import *
@@ -35,8 +36,9 @@ parser.add_argument('--epsilon-decay', type=float, default=0.99,
 parser.add_argument('--model-type', type=str, 
                     choices=['MLP', 'Policy', 'Value', 'CNN', 'RNN'], default='MLP', 
                     help='Type of model to use (MLP, Policy, Value, CNN, RNN) (default: MLP)')
-
 args = parser.parse_args()
+
+show_text = args.show_text
 
 def print_tensorflow_info():
     print(f"TensorFlow Version: {tf.__version__}")
@@ -80,14 +82,12 @@ def simulate_game_and_train(model, epsilon):
 
     while True:
         if args.show_text:
-            clear_screen()
+            cursor_topleft()
             plot_epsilon_value_text(epsilon, game_number, n_games)
-            print(f"Total: {game_number}, Wins for X: {wins_for_X}, Wins for O: {wins_for_O}, Draws: {draws}\n")
+            print(f"Wins for X: {wins_for_X}, Wins for O: {wins_for_O}, Draws: {draws}\n")
             print(f"Starting Player: {Fore.RED + 'X' if starting_player == 1 else Fore.GREEN + 'O'}" + Style.RESET_ALL)
-            print("Player", 'O' if player == -1 else 'X', "'s turn")
+            print("Player " + (Fore.RED + 'O' if player == -1 else Fore.GREEN + 'X') + Style.RESET_ALL + "'s turn")
             print_board(board)
-            visualize_model_weights_and_biases_text(model)
-            
 
         board_state = np.array([board])
         # Adjust board state based on current player
@@ -96,7 +96,10 @@ def simulate_game_and_train(model, epsilon):
         predictions = model.predict(board_state, verbose=0)
 
         if args.show_text:
+            #visualize_detailed_network_text(model, board_state , predictions)
             print_output_layer(predictions, board)
+            print()
+
 
         if args.show_visuals:
             visualize_output_layer(predictions, board)
@@ -110,7 +113,7 @@ def simulate_game_and_train(model, epsilon):
             move = get_human_move(board)
         else:
              # Use epsilon-greedy strategy for move selection  
-            move = epsilon_greedy_move(model, board, epsilon)
+            move = epsilon_greedy_move(model, board, epsilon, show_text)
 
         if args.delay:
             time.sleep(1)  # Pauses the program
@@ -140,20 +143,23 @@ def simulate_game_and_train(model, epsilon):
                 draws += 1
 
             if args.show_text:
-                clear_screen()
+                cursor_topleft()
                 plot_epsilon_value_text(epsilon, game_number, n_games)
-                print(f"Total: {game_number}, Wins for X: {wins_for_X}, Wins for O: {wins_for_O}, Draws: {draws}\n")
+                print(f"Wins for X: {wins_for_X}, Wins for O: {wins_for_O}, Draws: {draws}\n")
                 print(f"Starting Player: {Fore.RED + 'X' if starting_player == 1 else Fore.GREEN + 'O'}" + Style.RESET_ALL)
-                print("Player", 'O' if player == -1 else 'X', "'s turn")
+                print("Player " + (Fore.RED + 'O' if player == -1 else Fore.GREEN + 'X') + Style.RESET_ALL + "'s turn")
                 print_board(board)
                 print_output_layer(predictions, board)
+                print()
+                print()
 
             if args.show_visuals:
                 visualize_input_layer(board, game_number, wins_for_X, wins_for_O, draws)
                 visualize_output_layer(predictions, board)
 
             # Print winner
-            print(f"Game {game_number}: Winner - {Fore.RED + 'X' if winner == 1 else Fore.GREEN + 'O' if winner == -1 else 'Draw'}" + Style.RESET_ALL)
+            print(f"Game {game_number}: Winner - {Fore.RED + 'X   ' if winner == 1 else Fore.GREEN + 'O   ' if winner == -1 else 'Draw'}" + Style.RESET_ALL)
+            print()
             
             return current_game_history  # Return the history of this game
  
@@ -198,6 +204,8 @@ wins_for_X = 0
 wins_for_O = 0
 draws = 0
 
+model_update_count = 0
+
 epsilon_start = args.epsilon_start
 epsilon_end = args.epsilon_end
 epsilon_decay = args.epsilon_decay
@@ -209,6 +217,12 @@ batch_size = max(1, n_games // 10)  # Ensures at least one game per batch
 
 batch_game_history = []
 
+# Generate ASCII art
+print (text2art("Shall we play a game?"))
+time.sleep(5)  # Pauses the program
+
+clear_screen()
+
 # Main loop
 for game_number in range(1, n_games + 1):
     current_game_history = simulate_game_and_train(model, epsilon)
@@ -216,10 +230,13 @@ for game_number in range(1, n_games + 1):
 
     # Check if it's time to update the model
     if game_number % batch_size == 0 or game_number == n_games:
-        print(f"update model")
+        model_update_count += 1  # Increment the counter
+        print(f"Updating model... (Update count: {model_update_count})")
         update_model(model, batch_game_history)
         if args.show_visuals:
             visualize_model_weights_and_biases(model)
+        if args.show_text:
+            print_model_weights_and_biases(model)
 
         batch_game_history = []  # Reset for the next batch
 
