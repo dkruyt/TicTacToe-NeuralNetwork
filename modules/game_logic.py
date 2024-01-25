@@ -20,6 +20,23 @@ def check_winner(board):
         return 2  # Draw
     return 0  # Game ongoing
 
+# Function to summarize the outcomes of games in the game history
+def summarize_game_history(game_history):
+    wins_for_X = 0
+    wins_for_O = 0
+    draws = 0
+
+    for board_state, move in game_history:
+        winner = check_winner(board_state)
+        if winner == 1: 
+            wins_for_X += 1
+        elif winner == -1:
+            wins_for_O += 1
+        elif winner == 2:
+            draws += 1
+
+    return wins_for_X, wins_for_O, draws
+
 # Function to update the board state with the player's move
 def make_move(board, move, player):
     if board[move] == 0:

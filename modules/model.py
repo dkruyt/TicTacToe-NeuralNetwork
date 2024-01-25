@@ -17,7 +17,7 @@ def create_mlp_model(input_shape, dense_units, dropout_rate):
 
 def create_policy_mlp_model(input_shape, dense_units, dropout_rate):
     model = keras.Sequential([
-        layers.Dense(128, activation='relu', input_shape=input_shape, name='input_layer'),
+        layers.Dense(dense_units, activation='relu', input_shape=input_shape, name='input_layer'),
         layers.Dropout(dropout_rate, name='dropout_1'),
         layers.Dense(dense_units, activation='relu', name='hidden_layer_1'),
         layers.Dropout(dropout_rate, name='dropout_2'),

@@ -1,6 +1,4 @@
-from colorama import Fore, Back, Style
 import time
-import platform
 import argparse
 
 ## Local stuff
@@ -64,29 +62,12 @@ def update_model(model, batch_game_history):
     y_train = []
 
     for game_history in batch_game_history:
-        assign_rewards(game_history, check_winner(game_history[-1][0]))  # Assign rewards based on game outcome
+        assign_rewards_progress(game_history, check_winner(game_history[-1][0]))  # Assign rewards based on game outcome
         for board_state, target in game_history:
             X_train.append(board_state)
             y_train.append(target)
 
-    model.fit(np.array(X_train), np.array(y_train), verbose=1, batch_size=32)
-
-# Function to summarize the outcomes of games in the game history
-def summarize_game_history(game_history):
-    wins_for_X = 0
-    wins_for_O = 0
-    draws = 0
-
-    for board_state, move in game_history:
-        winner = check_winner(board_state)
-        if winner == 1:
-            wins_for_X += 1
-        elif winner == -1:
-            wins_for_O += 1
-        elif winner == 2:
-            draws += 1
-
-    return wins_for_X, wins_for_O, draws
+    model.fit(np.array(X_train), np.array(y_train), verbose=0, batch_size=32)
 
 # Main 
 def simulate_game_and_train(model, epsilon):
@@ -100,17 +81,27 @@ def simulate_game_and_train(model, epsilon):
     while True:
         if args.show_text:
             clear_screen()
+            plot_epsilon_value_text(epsilon, game_number, n_games)
             print(f"Total: {game_number}, Wins for X: {wins_for_X}, Wins for O: {wins_for_O}, Draws: {draws}\n")
             print(f"Starting Player: {Fore.RED + 'X' if starting_player == 1 else Fore.GREEN + 'O'}" + Style.RESET_ALL)
             print("Player", 'O' if player == -1 else 'X', "'s turn")
-            print()
             print_board(board)
+            visualize_model_weights_and_biases_text(model)
+            
 
         board_state = np.array([board])
+        # Adjust board state based on current player
+        #board_state = np.array([[-x if player == -1 else x for x in board]])
+
         predictions = model.predict(board_state, verbose=0)
+
+        if args.show_text:
+            print_output_layer(predictions, board)
+
         if args.show_visuals:
             visualize_output_layer(predictions, board)
             visualize_detailed_network(model, board_state , predictions)
+
         if (args.human_player == 'X') or (args.human_player == 'O') or (args.show_visuals):
             visualize_input_layer(board, game_number, wins_for_X, wins_for_O, draws)
 
@@ -150,11 +141,13 @@ def simulate_game_and_train(model, epsilon):
 
             if args.show_text:
                 clear_screen()
+                plot_epsilon_value_text(epsilon, game_number, n_games)
                 print(f"Total: {game_number}, Wins for X: {wins_for_X}, Wins for O: {wins_for_O}, Draws: {draws}\n")
                 print(f"Starting Player: {Fore.RED + 'X' if starting_player == 1 else Fore.GREEN + 'O'}" + Style.RESET_ALL)
                 print("Player", 'O' if player == -1 else 'X', "'s turn")
-                print()
                 print_board(board)
+                print_output_layer(predictions, board)
+
             if args.show_visuals:
                 visualize_input_layer(board, game_number, wins_for_X, wins_for_O, draws)
                 visualize_output_layer(predictions, board)
@@ -232,7 +225,8 @@ for game_number in range(1, n_games + 1):
 
     # Update epsilon
     epsilon = max(epsilon_end, epsilon_decay * epsilon)
-    print(f"After Game {game_number}: Updated Epsilon Value = {epsilon:.4f}")
+    #print(f"After Game {game_number}: Updated Epsilon Value = {epsilon:.4f}")
+    #plot_epsilon_value_text(epsilon, game_number, n_games)
 
     if args.show_visuals:
         plot_game_statistics(wins_for_X, wins_for_O, draws)
