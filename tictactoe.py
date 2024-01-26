@@ -42,6 +42,23 @@ parser.add_argument('--reward', type=str,
 
 args = parser.parse_args()
 
+# Print the argument values
+print("Configured settings for Tic-Tac-Toe game:")
+print("Show Visuals:      ", args.show_visuals)
+print("Show Text:         ", args.show_text)
+print("Delay:             ", args.delay)
+print("Human Player:      ", args.human_player)
+print("Number of Games:   ", args.games)
+print("Model Name:        ", args.model_name)
+print("Dense Units:       ", args.dense_units)
+print("Dropout Rate:      ", args.dropout_rate)
+print("Epsilon Start:     ", args.epsilon_start)
+print("Epsilon End:       ", args.epsilon_end)
+print("Epsilon Decay:     ", args.epsilon_decay)
+print("Model Type:        ", args.model_type)
+print("Reward Strategy:   ", args.reward)
+print()
+
 show_text = args.show_text
 
 def print_tensorflow_info():
@@ -126,8 +143,11 @@ def simulate_game_and_train(model, epsilon):
         if (args.human_player == 'X' and player == 1) or (args.human_player == 'O' and player == -1):
             move = get_human_move(board)
         else:
-             # Use epsilon-greedy strategy for move selection  
-            move = epsilon_greedy_move(model, board, epsilon, show_text)
+             # Use epsilon-greedy strategy for move selection
+            if args.model_type == 'Value':  
+                move = epsilon_greedy_move_value(model, board, player, epsilon, show_text)
+            else:
+                move = epsilon_greedy_move_default(model, board, epsilon, show_text)
 
         if args.delay:
             time.sleep(1)  # Pauses the program
@@ -235,7 +255,8 @@ batch_game_history = []
 print (text2art("Shall we play a game?"))
 time.sleep(5)  # Pauses the program
 
-clear_screen()
+if args.show_text:
+    clear_screen()
 
 # Main loop
 for game_number in range(1, n_games + 1):

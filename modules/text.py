@@ -90,9 +90,9 @@ def print_model_weights_and_biases(model):
                 print(f"  Biases: Mean = {biases.mean():.4f}, Std = {biases.std():.4f}, Min = {biases.min():.4f}, Max = {biases.max():.4f}")
 
             elif type(layer) == layers.SimpleRNN:
-                weights = weights_biases[0][:, :layer.units]
-                recurrent_weights = weights_biases[0][:, layer.units:]
-                biases = weights_biases[1]
+                weights = weights_biases[0]
+                recurrent_weights = weights_biases[1]
+                biases = weights_biases[2]
 
                 print(f"SimpleRNN Layer {i+1}: {layer.name}")
                 print(f"  Input Weights: Mean = {weights.mean():.4f}, Std = {weights.std():.4f}, Min = {weights.min():.4f}, Max = {weights.max():.4f}")

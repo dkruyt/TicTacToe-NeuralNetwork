@@ -82,7 +82,7 @@ def switch_player(player):
     return -player
 
 # Function to select the next move using epsilon-greedy strategy
-def epsilon_greedy_move(model, board, epsilon, show_text):
+def epsilon_greedy_move_default(model, board, epsilon, show_text):
     if random.random() < epsilon:
         # Exploration: Choose a random move
         valid_moves = [i for i in range(9) if board[i] == 0]
@@ -99,6 +99,31 @@ def epsilon_greedy_move(model, board, epsilon, show_text):
         if show_text:
             print("\r\033[KAI is exploiting: Chose the best predicted move.", end='')
         return np.argmax(predictions)
+
+def epsilon_greedy_move_value(model, board, player, epsilon, show_text):
+    if random.random() < epsilon:
+        # Exploration: Choose a random move
+        valid_moves = [i for i in range(9) if board[i] == 0]
+        if show_text:
+            print("\r\033[KAI is exploring: Chose a random move.", end='')
+        return random.choice(valid_moves)
+    else:
+        # Exploitation: Choose the best move based on model prediction
+        best_move = None
+        best_value = -float('inf')
+        for i in range(9):
+            if board[i] == 0:
+                new_board = board.copy()
+                new_board[i] = player
+                board_state = np.array([new_board])
+                predicted_value = model.predict(board_state, verbose=0)[0]
+                if predicted_value > best_value:
+                    best_value = predicted_value
+                    best_move = i
+        if show_text:
+            print("\r\033[KAI is exploiting: Chose the best predicted move.", end='')
+        return best_move if best_move is not None else random.choice([i for i in range(9) if board[i] == 0])
+
 
 def check_potential_win(board, player):
     for i in range(3):
