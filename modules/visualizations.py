@@ -254,7 +254,7 @@ def visualize_detailed_network(model, input_data, output_data):
 
         for i, neuron_y in enumerate(np.linspace(0, 1, displayed_neurons, endpoint=False) + v_spacing / 2.):
             neuron_color = 'white' if i in middle_neurons and layer_size > 16 else layer_colors[n % len(layer_colors)]
-            circle = plt.Circle((layer_x, neuron_y), v_spacing/2. * 1.5, color=neuron_color, ec='k', zorder=4)
+            circle = plt.Circle((layer_x, neuron_y), 0.012, color=neuron_color, ec='k', zorder=4)
             nn_ax.add_artist(circle)
 
             if n > 0:
@@ -327,16 +327,16 @@ def plot_epsilon_value(epsilon_value, game_number, total_games):
     plt.pause(0.001)  # Pause to update the plot
 
 # Global variables for the figure, axes and lines
-global stats_fig, stats_ax, stats_lines
+global plotstats_fig, stats_ax, stats_lines
 
 def plot_cumulative_statistics(wins_for_X, wins_for_O, draws, total_games, batch_size):
 
-    global stats_fig, stats_ax, stats_lines
+    global plotstats_fig, stats_ax, stats_lines
     labels = ['Wins for X', 'Wins for O', 'Draws']
 
     # Create the figure and axes if they don't exist
-    if 'stats_fig' not in globals():
-        stats_fig, stats_ax = plt.subplots(figsize=(10, 5))
+    if 'plotstats_fig' not in globals():
+        plotstats_fig, stats_ax = plt.subplots(figsize=(10, 5))
         stats_lines = stats_ax.plot([], [], 'r-',  # Line for Wins for X
                                     [], [], 'g-',  # Line for Wins for O
                                     [], [], 'b-')  # Line for Draws
@@ -362,3 +362,4 @@ def plot_cumulative_statistics(wins_for_X, wins_for_O, draws, total_games, batch
     # Redraw the plot
     stats_fig.canvas.draw()
     plt.pause(0.001)  # Pause to update the plot
+
