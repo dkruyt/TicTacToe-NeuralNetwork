@@ -243,23 +243,32 @@ def visualize_detailed_network(model, input_data, output_data):
             nn_ax.text(-0.17, y, 'O', ha='left', va='center', fontsize=20, color='green')
 
     # Neurons and Connections
+    max_neurons = 24
+    def find_middle_neurons(max_neurons):
+
+        midpoint = max_neurons // 2
+        start = max(midpoint - 2, 0)
+        end = min(midpoint + 2, max_neurons)
+
+        return list(range(start, end))
+
     for n, layer_size in enumerate(layer_sizes):
         layer_x = n * h_spacing
-        if layer_size > 16:
-            displayed_neurons = 16
-            middle_neurons = [6, 7, 8, 9]
+        if layer_size > max_neurons:
+            displayed_neurons = max_neurons
+            middle_neurons = find_middle_neurons(max_neurons)
         else:
             displayed_neurons = layer_size
             middle_neurons = []
 
         for i, neuron_y in enumerate(np.linspace(0, 1, displayed_neurons, endpoint=False) + v_spacing / 2.):
-            neuron_color = 'white' if i in middle_neurons and layer_size > 16 else layer_colors[n % len(layer_colors)]
+            neuron_color = 'lightgray' if i in middle_neurons and layer_size > max_neurons else layer_colors[n % len(layer_colors)]
             circle = plt.Circle((layer_x, neuron_y), 0.012, color=neuron_color, ec='k', zorder=4)
             nn_ax.add_artist(circle)
 
             if n > 0:
-                for j, prev_neuron_y in enumerate(np.linspace(0, 1, layer_sizes[n - 1], endpoint=False) + v_spacing / 2.):
-                    color = rainbow(float(i + j) / (displayed_neurons + layer_sizes[n - 1]))
+                for j, prev_neuron_y in enumerate(np.linspace(0, 1, min(layer_sizes[n - 1], max_neurons), endpoint=False) + v_spacing / 2.):
+                    color = rainbow(float(i + j) / (displayed_neurons + min(layer_sizes[n - 1], max_neurons)))
                     line = plt.Line2D([layer_x - h_spacing, layer_x], [prev_neuron_y, neuron_y], c=color, alpha=0.7)
                     nn_ax.add_artist(line)
 
