@@ -325,3 +325,40 @@ def plot_epsilon_value(epsilon_value, game_number, total_games):
     # Redraw the plot
     epsilon_fig.canvas.draw()
     plt.pause(0.001)  # Pause to update the plot
+
+# Global variables for the figure, axes and lines
+global stats_fig, stats_ax, stats_lines
+
+def plot_cumulative_statistics(wins_for_X, wins_for_O, draws, total_games, batch_size):
+
+    global stats_fig, stats_ax, stats_lines
+    labels = ['Wins for X', 'Wins for O', 'Draws']
+
+    # Create the figure and axes if they don't exist
+    if 'stats_fig' not in globals():
+        stats_fig, stats_ax = plt.subplots(figsize=(10, 5))
+        stats_lines = stats_ax.plot([], [], 'r-',  # Line for Wins for X
+                                    [], [], 'g-',  # Line for Wins for O
+                                    [], [], 'b-')  # Line for Draws
+        stats_ax.set_xlim(0, total_games)
+        stats_ax.set_ylim(0, total_games)
+        stats_ax.set_xlabel('Game Number')
+        stats_ax.set_ylabel('Cumulative Count')
+        stats_ax.set_title('Game Statistics Over Time')
+        stats_ax.legend(labels)
+
+    stats_ax.vlines = []
+    # Add vertical dotted lines every batch_size games
+    for x in range(0, total_games, batch_size):
+        line = stats_ax.axvline(x, linestyle='dotted', color='grey')
+        stats_ax.vlines.append(line)
+
+    # Update the data
+    x_data = range(len(wins_for_X))
+    stats_lines[0].set_data(x_data, wins_for_X)  # Update Wins for X line
+    stats_lines[1].set_data(x_data, wins_for_O)  # Update Wins for O line
+    stats_lines[2].set_data(x_data, draws)  # Update Draws line
+
+    # Redraw the plot
+    stats_fig.canvas.draw()
+    plt.pause(0.001)  # Pause to update the plot

@@ -1,6 +1,7 @@
 import time
 import argparse
 from art import *
+import sys
 
 ## Local stuff
 from modules.model import *
@@ -19,8 +20,12 @@ parser.add_argument('--delay', action='store_true',
                     help='Add delay (default: False)')
 parser.add_argument('--human-player', type=str, choices=['X', 'O', 'None'], default='None', 
                     help='Play as a human player with X or O, or None for AI vs AI (default: None)')
+parser.add_argument('--alternate-moves', action='store_true', 
+                    help='Alternate moves between X and O players (default: False)')
 parser.add_argument('--games', type=int, default=10, 
                     help='Number of games to play (default: 10)')
+parser.add_argument('--batch-size', type=int, default=None, 
+                    help='Batch size for updating training the model, default a tenth from the number of games.')
 parser.add_argument('--model-name', type=str, default='tic_tac_toe_model.keras', 
                     help='Filename for saving/loading the model (default: tic_tac_toe_model.keras)')
 parser.add_argument('--dense-units', type=int, default=32, 
@@ -35,13 +40,13 @@ parser.add_argument('--epsilon-decay', type=float, default=0.99,
                     help='Decay rate of epsilon after each game (default: 0.99)')
 parser.add_argument('--model-type', type=str, 
                     choices=['MLP', 'Policy', 'Value', 'CNN', 'RNN'], default='MLP', 
-                    help='Type of model to use (MLP, Policy, Value, CNN, RNN) (default: MLP)')
+                    help='Define the type of AI model. Choices are Multilayer Perceptron (MLP), Policy, Value, Convolutional Neural Network (CNN), and Recurrent Neural Network (RNN).')
 parser.add_argument('--reward', type=str,
                     choices=['block', 'progress', 'penalty', 'simple', 'future'], default='progress', 
-                    help='Reward strategy')
+                    help='Select the reward strategy for the AI agent.')
 parser.add_argument('--strategy', type=str,
                     choices=['epsilon_greedy', 'random', 'softmax', 'ucb'], default='epsilon_greedy', 
-                    help='Move strategy')
+                    help='Select the move selection strategy for the AI agent.')
 args = parser.parse_args()
 
 # Print the argument values
@@ -50,6 +55,7 @@ print("Show Visuals:      ", args.show_visuals)
 print("Show Text:         ", args.show_text)
 print("Delay:             ", args.delay)
 print("Human Player:      ", args.human_player)
+print("Alternate moves:   ", args.alternate_moves)
 print("Number of Games:   ", args.games)
 print("Model Name:        ", args.model_name)
 print("Dense Units:       ", args.dense_units)
@@ -124,9 +130,10 @@ def simulate_game_and_train(model, epsilon):
             print("Player " + (Fore.RED + 'O' if player == -1 else Fore.GREEN + 'X') + Style.RESET_ALL + "'s turn")
             print_board(board)
 
-        board_state = np.array([board])
+        # todo we need this?
+        #board_state = np.array([board])
         # Adjust board state based on current player
-        #board_state = np.array([[-x if player == -1 else x for x in board]])
+        board_state = np.array([[-x if player == -1 else x for x in board]])
 
         predictions = model.predict(board_state, verbose=0)
 
@@ -134,7 +141,6 @@ def simulate_game_and_train(model, epsilon):
             #visualize_detailed_network_text(model, board_state , predictions)
             print_output_layer(predictions, board)
             print()
-
 
         if args.show_visuals:
             visualize_output_layer(predictions, board)
@@ -249,6 +255,10 @@ wins_for_X = 0
 wins_for_O = 0
 draws = 0
 
+list_X = []
+list_O = []
+list_draws = []
+
 model_update_count = 0
 
 epsilon_start = args.epsilon_start
@@ -257,8 +267,11 @@ epsilon_decay = args.epsilon_decay
 epsilon = epsilon_start
 
 # Define the number of games after which model will be updated
-# Set batch_size to be a tenth of n_games
-batch_size = max(1, n_games // 10)  # Ensures at least one game per batch
+# Default batch_size to be a tenth of n_games
+if args.batch_size is not None:
+    batch_size = args.batch_size
+else:
+    batch_size = max(1, n_games // 10)
 
 batch_game_history = []
 
@@ -271,38 +284,56 @@ if args.show_text:
 
 # Main loop
 for game_number in range(1, n_games + 1):
-    current_game_history = simulate_game_and_train(model, epsilon)
-    batch_game_history.append(current_game_history)  # Append the history of the current game
+    try:
+        current_game_history = simulate_game_and_train(model, epsilon)
+        batch_game_history.append(current_game_history)  # Append the history of the current game
 
-    # Check if it's time to update the model
-    if game_number % batch_size == 0 or game_number == n_games:
-        model_update_count += 1  # Increment the counter
-        print(f"Updating model... (Update count: {model_update_count})")
-        update_model(model, batch_game_history)
+        # Check if it's time to update the model
+        if game_number % batch_size == 0 or game_number == n_games:
+            model_update_count += 1  # Increment the counter
+            print(f"Updating model... (Update count: {model_update_count})")
+            update_model(model, batch_game_history)
+            if args.show_visuals:
+                visualize_model_weights_and_biases(model)
+            if args.show_text:
+                print_model_weights_and_biases(model)
+
+            batch_game_history = []  # Reset for the next batch
+
+        # Update epsilon
+        epsilon = max(epsilon_end, epsilon_decay * epsilon)
+
         if args.show_visuals:
-            visualize_model_weights_and_biases(model)
-        if args.show_text:
-            print_model_weights_and_biases(model)
+            plot_game_statistics(wins_for_X, wins_for_O, draws)
+            # Update the epsilon plot
+            plot_epsilon_value(epsilon, game_number, n_games)
 
-        batch_game_history = []  # Reset for the next batch
+        # Switch starting player for the next game
+        if args.alternate_moves:
+            starting_player = -starting_player
 
-    # Update epsilon
-    epsilon = max(epsilon_end, epsilon_decay * epsilon)
-    #print(f"After Game {game_number}: Updated Epsilon Value = {epsilon:.4f}")
-    #plot_epsilon_value_text(epsilon, game_number, n_games)
+        # test
+        list_X.append(wins_for_X)
+        list_O.append(wins_for_O)
+        list_draws.append(draws)
+        if game_number % batch_size == 0 or game_number == n_games:
+            plot_cumulative_statistics(list_X, list_O, list_draws, n_games, batch_size)
 
-    if args.show_visuals:
-        plot_game_statistics(wins_for_X, wins_for_O, draws)
-        # Update the epsilon plot
-        plot_epsilon_value(epsilon, game_number, n_games)
+        # Apply a 3-second delay if either 'delay' is enabled or a human player is playing
+        if args.delay or args.human_player in ['X', 'O']:
+            time.sleep(3)  # Pauses the program for 3 seconds
 
-    # Switch starting player for the next game
-    starting_player = -starting_player
-
-    # Apply a 3-second delay if either 'delay' is enabled or a human player is playing
-    if args.delay or args.human_player in ['X', 'O']:
-        time.sleep(3)  # Pauses the program for 3 seconds
-
+    except KeyboardInterrupt:
+        clear_screen()
+        save_model = input("\nDetected KeyboardInterrupt. Do you want to save the model before exiting? (y/n): ")
+        if save_model.lower() == 'y':
+            print("Saving model...")
+            # Save your model here
+            model.save(args.model_name)  # Saves the model
+            print("Model saved. Exiting.")
+        else:
+            print("Model not saved. Exiting.")
+        sys.exit(0)
 
 # Get new weights after training
 new_weights = model.get_weights()
@@ -333,3 +364,7 @@ except IOError as e:
 except Exception as e:
     # Handle other possible exceptions
     print(f"An unexpected error occurred while saving the model: {e}")
+
+#if args.show_visuals:
+print("We are done.")
+input("Press Enter to exit images will be closed...")  

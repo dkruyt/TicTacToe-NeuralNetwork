@@ -144,7 +144,7 @@ def random_move_selection(board, show_text):
     return random.choice(valid_moves)
 
 # Function to select next move using softmax exploration
-def softmax_exploration(model, board):
+def softmax_exploration(model, board, show_text):
     if show_text:
         print("AI is selecting a move using softmax exploration.")
     # Getting Q values from the model for current state
