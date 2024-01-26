@@ -136,49 +136,55 @@ def check_potential_win(board, player):
             return True
     return False
 
-def minimax_alpha_beta(board, player, alpha, beta):
-    # Base cases: check if the game is already won/lost/drawn
-    winner = check_winner(board)
-    if winner == player:
-        return 1
-    elif winner == -player:
-        return -1
-    elif winner == 2:  # Draw
-        return 0
+# Function to select next move
+def random_move_selection(board):
+    valid_moves = [i for i in range(9) if board[i] == 0]
+    print("AI is choosing a random move.")
+    return random.choice(valid_moves)
 
-    best_score = -float('inf') if player == 1 else float('inf')  # Initialize the best score possible
+# Function to select next move using softmax exploration
+def softmax_exploration(model, board):
+    print("AI is selecting a move using softmax exploration.")
+    # Getting Q values from the model for current state
+    Q_values = model.predict(np.array([board]), verbose=0)[0]
 
-    # Recursive call: run the minimax algorithm for every possible move
-    for move in range(9):
-        if board[move] == 0:  # Only consider valid moves
-            board[move] = player  # Make the move temporarily
-            score = minimax_alpha_beta(board, -player, alpha, beta)  # Recursive call
-            board[move] = 0  # Undo the move
-            if player == 1:  # Maximizing player
-                best_score = max(best_score, score)
-                alpha = max(alpha, score)
-                if beta <= alpha:
-                    break  # Beta cut-off
-            else:  # Minimizing player
-                best_score = min(best_score, score)
-                beta = min(beta, score)
-                if beta <= alpha:
-                    break  # Alpha cut-off
+    # Calculating policy probabilities using softmax
+    policy = np.exp(Q_values) / np.sum(np.exp(Q_values))
 
-    return best_score
+    # Getting all the valid moves
+    valid_moves = [i for i in range(9) if board[i] == 0]
 
-def minimax_move(model, board, player):
-    best_score = -float('inf') if player == 1 else float('inf')
-    best_move = None
+    # Keeping only probabilities of valid moves
+    policy = [policy[i] if i in valid_moves else 0 for i in range(9)]
 
-    for move in range(9):
-        if board[move] == 0:  # Only consider valid moves
-            board[move] = player  # Temporarily make the move
-            score = minimax_alpha_beta(board, -player, -float('inf'), float('inf'))  # Calculate score using minimax algorithm
-            board[move] = 0  # Undo the move
+    # Normalizing the policy again after excluding invalid moves
+    policy = policy / np.sum(policy)
 
-            if (player == 1 and score > best_score) or (player == -1 and score < best_score):
-                best_score = score
-                best_move = move
+    # Choosing a move from valid moves according to the policy probabilities
+    move = np.random.choice(range(9), p=policy)
 
-    return best_move
+    return move
+
+# Initialize action counts
+action_counts = [0]*9
+
+def ucb_move_selection(model, board, c_param=0.1):
+    global action_counts
+    print("AI is selecting a move using Upper Confidence Bound strategy.")
+  
+    # Get Q values for the board state from the model
+    Q_values = model.predict(np.array([board]), verbose=0)[0]
+    
+    # Get the count of total actions taken
+    total_actions = sum(action_counts)
+  
+    # Compute UCB values for each action
+    ucb_values = [Q_values[a] + c_param * np.sqrt(np.log(total_actions)/ action_counts[a]) if board[a] == 0 else -np.inf for a in range(9)]
+    
+    # Select the action with highest UCB value
+    move = np.argmax(ucb_values)
+  
+    # Update the count of the selected move
+    action_counts[move] += 1
+  
+    return move

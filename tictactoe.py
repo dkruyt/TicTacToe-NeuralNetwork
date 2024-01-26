@@ -39,7 +39,9 @@ parser.add_argument('--model-type', type=str,
 parser.add_argument('--reward', type=str,
                     choices=['block', 'progress', 'penalty', 'simple', 'future'], default='progress', 
                     help='Reward strategy')
-
+parser.add_argument('--strategy', type=str,
+                    choices=['epsilon_greedy', 'random', 'softmax', 'ucb'], default='epsilon_greedy', 
+                    help='Move strategy')
 args = parser.parse_args()
 
 # Print the argument values
@@ -57,6 +59,8 @@ print("Epsilon End:       ", args.epsilon_end)
 print("Epsilon Decay:     ", args.epsilon_decay)
 print("Model Type:        ", args.model_type)
 print("Reward Strategy:   ", args.reward)
+print("Move Strategy:     ", args.strategy)
+
 print()
 
 show_text = args.show_text
@@ -143,11 +147,18 @@ def simulate_game_and_train(model, epsilon):
         if (args.human_player == 'X' and player == 1) or (args.human_player == 'O' and player == -1):
             move = get_human_move(board)
         else:
-             # Use epsilon-greedy strategy for move selection
+             # Strategy for move selection
             if args.model_type == 'Value':  
                 move = epsilon_greedy_move_value(model, board, player, epsilon, show_text)
             else:
-                move = epsilon_greedy_move_default(model, board, epsilon, show_text)
+                if args.strategy == 'epsilon_greedy':
+                    move = epsilon_greedy_move_default(model, board, epsilon, show_text)
+                elif args.strategy == 'random':
+                    move = random_move_selection(board)
+                elif args.strategy == 'softmax':
+                    move = softmax_exploration(model, board)
+                elif args.strategy == 'ucb':
+                    move = ucb_move_selection(model, board, c_param=0.1)
 
         if args.delay:
             time.sleep(1)  # Pauses the program
