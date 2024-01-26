@@ -135,3 +135,50 @@ def check_potential_win(board, player):
                        board[2] + board[4] + board[6] == 2 * player):
             return True
     return False
+
+def minimax_alpha_beta(board, player, alpha, beta):
+    # Base cases: check if the game is already won/lost/drawn
+    winner = check_winner(board)
+    if winner == player:
+        return 1
+    elif winner == -player:
+        return -1
+    elif winner == 2:  # Draw
+        return 0
+
+    best_score = -float('inf') if player == 1 else float('inf')  # Initialize the best score possible
+
+    # Recursive call: run the minimax algorithm for every possible move
+    for move in range(9):
+        if board[move] == 0:  # Only consider valid moves
+            board[move] = player  # Make the move temporarily
+            score = minimax_alpha_beta(board, -player, alpha, beta)  # Recursive call
+            board[move] = 0  # Undo the move
+            if player == 1:  # Maximizing player
+                best_score = max(best_score, score)
+                alpha = max(alpha, score)
+                if beta <= alpha:
+                    break  # Beta cut-off
+            else:  # Minimizing player
+                best_score = min(best_score, score)
+                beta = min(beta, score)
+                if beta <= alpha:
+                    break  # Alpha cut-off
+
+    return best_score
+
+def minimax_move(model, board, player):
+    best_score = -float('inf') if player == 1 else float('inf')
+    best_move = None
+
+    for move in range(9):
+        if board[move] == 0:  # Only consider valid moves
+            board[move] = player  # Temporarily make the move
+            score = minimax_alpha_beta(board, -player, -float('inf'), float('inf'))  # Calculate score using minimax algorithm
+            board[move] = 0  # Undo the move
+
+            if (player == 1 and score > best_score) or (player == -1 and score < best_score):
+                best_score = score
+                best_move = move
+
+    return best_move
