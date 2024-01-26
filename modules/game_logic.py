@@ -125,7 +125,7 @@ def epsilon_greedy_move_value(model, board, player, epsilon, show_text):
         return best_move if best_move is not None else random.choice([i for i in range(9) if board[i] == 0])
 
 
-def check_potential_win(board, player):
+def check_potential_win(board, player, show_text):
     for i in range(3):
         # Check rows and columns for potential win
         if sum(board[i*3:(i+1)*3]) == 2 * player or sum(board[i::3]) == 2 * player:
@@ -137,14 +137,16 @@ def check_potential_win(board, player):
     return False
 
 # Function to select next move
-def random_move_selection(board):
+def random_move_selection(board, show_text):
     valid_moves = [i for i in range(9) if board[i] == 0]
-    print("AI is choosing a random move.")
+    if show_text:
+        print("AI is choosing a random move.")
     return random.choice(valid_moves)
 
 # Function to select next move using softmax exploration
 def softmax_exploration(model, board):
-    print("AI is selecting a move using softmax exploration.")
+    if show_text:
+        print("AI is selecting a move using softmax exploration.")
     # Getting Q values from the model for current state
     Q_values = model.predict(np.array([board]), verbose=0)[0]
 
@@ -168,9 +170,10 @@ def softmax_exploration(model, board):
 # Initialize action counts
 action_counts = [0]*9
 
-def ucb_move_selection(model, board, c_param=0.1):
+def ucb_move_selection(model, board, show_text,c_param=0.1):
     global action_counts
-    print("AI is selecting a move using Upper Confidence Bound strategy.")
+    if show_text:
+        print("AI is selecting a move using Upper Confidence Bound strategy.")
   
     # Get Q values for the board state from the model
     Q_values = model.predict(np.array([board]), verbose=0)[0]
@@ -179,8 +182,9 @@ def ucb_move_selection(model, board, c_param=0.1):
     total_actions = sum(action_counts)
   
     # Compute UCB values for each action
-    ucb_values = [Q_values[a] + c_param * np.sqrt(np.log(total_actions)/ action_counts[a]) if board[a] == 0 else -np.inf for a in range(9)]
-    
+    ucb_values = [Q_values[a] + c_param * np.sqrt(np.log(total_actions+1)/ (action_counts[a]+1)) 
+                  if board[a] == 0 else -np.inf for a in range(9)]
+        
     # Select the action with highest UCB value
     move = np.argmax(ucb_values)
   

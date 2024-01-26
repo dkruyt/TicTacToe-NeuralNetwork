@@ -154,11 +154,11 @@ def simulate_game_and_train(model, epsilon):
                 if args.strategy == 'epsilon_greedy':
                     move = epsilon_greedy_move_default(model, board, epsilon, show_text)
                 elif args.strategy == 'random':
-                    move = random_move_selection(board)
+                    move = random_move_selection(board, show_text)
                 elif args.strategy == 'softmax':
-                    move = softmax_exploration(model, board)
+                    move = softmax_exploration(model, board, show_text)
                 elif args.strategy == 'ucb':
-                    move = ucb_move_selection(model, board, c_param=0.1)
+                    move = ucb_move_selection(model, board, show_text, c_param=0.1)
 
         if args.delay:
             time.sleep(1)  # Pauses the program
