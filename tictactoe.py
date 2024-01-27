@@ -39,10 +39,10 @@ parser.add_argument('--epsilon-end', type=float, default=0.1,
 parser.add_argument('--epsilon-decay', type=float, default=0.99, 
                     help='Decay rate of epsilon after each game (default: 0.99)')
 parser.add_argument('--model-type', type=str, 
-                    choices=['MLP', 'Policy', 'Value', 'CNN', 'RNN'], default='MLP', 
+                    choices=['MLP', 'Policy', 'Value', 'CNN', 'RNN', 'Simple'], default='MLP', 
                     help='Define the type of AI model. Choices are Multilayer Perceptron (MLP), Policy, Value, Convolutional Neural Network (CNN), and Recurrent Neural Network (RNN).')
 parser.add_argument('--reward', type=str,
-                    choices=['block', 'progress', 'penalty', 'simple', 'future'], default='progress', 
+                    choices=['block', 'progress', 'penalty', 'simple', 'future', 'combined', 'win_moves', 'winning_sequence', 'opponent_penalty'], default='progress', 
                     help='Select the reward strategy for the AI agent.')
 parser.add_argument('--strategy', type=str,
                     choices=['epsilon_greedy', 'random', 'softmax', 'ucb'], default='epsilon_greedy', 
@@ -105,12 +105,21 @@ def update_model(model, batch_game_history):
             assign_reward_penalty(game_history, check_winner(game_history[-1][0]))  # Assign rewards based on game outcome
         elif args.reward == 'future':
             assign_rewards_future(game_history, check_winner(game_history[-1][0]))  # Assign rewards based on game outcome
+        elif args.reward == 'combined':
+            assign_rewards_combined(game_history, check_winner(game_history[-1][0]))  # Assign rewards based on game outcome
+        elif args.reward == 'win_moves':
+            assign_rewards_only_for_win(game_history, check_winner(game_history[-1][0]))  # Assign rewards based on game outcome
+        elif args.reward == 'winning_sequence':
+            assign_rewards_for_winning_sequence(game_history, check_winner(game_history[-1][0]))  # Assign rewards based on game outcome
+        elif args.reward == 'opponent_penalty':
+            assign_rewards_and_opponent_penalty(game_history, check_winner(game_history[-1][0]))  # Assign rewards based on game outcome
+
 
         for board_state, target in game_history:
             X_train.append(board_state)
             y_train.append(target)
 
-    model.fit(np.array(X_train), np.array(y_train), verbose=0, batch_size=32)
+    model.fit(np.array(X_train), np.array(y_train), verbose=0, batch_size=32, callbacks=[tensorboard_callback])
 
 # Main 
 def simulate_game_and_train(model, epsilon):
@@ -130,7 +139,7 @@ def simulate_game_and_train(model, epsilon):
             print("Player " + (Fore.RED + 'O' if player == -1 else Fore.GREEN + 'X') + Style.RESET_ALL + "'s turn")
             print_board(board)
 
-        # todo we need this?
+        # todo we need this? Correct!!!!
         #board_state = np.array([board])
         # Adjust board state based on current player
         board_state = np.array([[-x if player == -1 else x for x in board]])
@@ -158,7 +167,7 @@ def simulate_game_and_train(model, epsilon):
                 move = epsilon_greedy_move_value(model, board, player, epsilon, show_text)
             else:
                 if args.strategy == 'epsilon_greedy':
-                    move = epsilon_greedy_move_default(model, board, epsilon, show_text)
+                    move = epsilon_greedy_move_default(model, board, player, epsilon, show_text)
                 elif args.strategy == 'random':
                     move = random_move_selection(board, show_text)
                 elif args.strategy == 'softmax':
@@ -232,6 +241,8 @@ else:
         model = create_cnn_model(input_shape, args.dense_units, args.dropout_rate)
     elif args.model_type == 'RNN':
         model = create_rnn_model(input_shape, args.dense_units, args.dropout_rate)
+    elif args.model_type == 'Simple':
+        model = create_simple_mlp_model(input_shape, args.dense_units)
     else:
         raise ValueError("Invalid model type")
 
@@ -240,6 +251,9 @@ else:
 model.summary()
 
 initial_weights = model.get_weights()
+
+# Set up TensorBoard logging
+tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir="./logs")
 
 if args.show_visuals:
     # After model is created or loaded
