@@ -62,3 +62,12 @@ def create_rnn_model(input_shape, dense_units, dropout_rate):
     ], name='RNN_Model')
     model.compile(optimizer='adam', loss='mean_squared_error')
     return model
+
+# simple mlp
+def create_simple_mlp_model(input_shape, dense_units):
+    model = keras.models.Sequential([
+        keras.layers.Dense(dense_units, activation="relu", input_shape=input_shape, name='input_layer'),
+        keras.layers.Dense(9, name='output_layer')
+    ], name='SimpleMLP_Model')
+    model.compile(loss="mse", optimizer="adam")
+    return model
