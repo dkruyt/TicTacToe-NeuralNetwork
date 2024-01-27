@@ -213,3 +213,189 @@ def check_future_win(board_state, move):
                 return True
             temp_state[i] = 0
     return False
+
+def assign_rewards_combined(game_history, winner):
+    reward_for_win = 2.0
+    reward_for_loss = -1.0
+    reward_for_draw = 0.5
+    reward_for_block = 0.2 
+    reward_for_progress = 0.1 
+    predictive_reward = 0.2
+    penalty_for_each_move = 0.2
+
+    if winner == 1:
+        reward = reward_for_win
+    elif winner == -1:
+        reward = reward_for_loss
+    elif winner == 2:
+        reward = reward_for_draw
+    else:
+        raise ValueError("Invalid winner value")
+
+    decay_factor = 0.9
+    current_reward = reward
+
+    for i in range(len(game_history) - 1, -1, -1):
+        board_state, move = game_history[i]
+        target = np.zeros(9)
+        target[move] = current_reward
+
+        # If not the last move, check if the move was a blocking move
+        if i < len(game_history) - 1:
+            next_board_state, _ = game_history[i + 1]
+            if check_potential_win(board_state, -1 * np.sign(board_state[move])) and \
+                    not check_potential_win(next_board_state, -1 * np.sign(board_state[move])):
+                target[move] += reward_for_block
+
+        # Additional reward for predictive move
+        if check_future_win(board_state, move):
+            target[move] += predictive_reward
+
+        # Incremental reward for each move leading to a win
+        current_reward += reward_for_progress
+
+        game_history[i] = (board_state, target)
+
+        # Apply decay to the reward for the next (earlier) move
+        current_reward *= decay_factor
+        # penalty for each move made
+        current_reward -= penalty_for_each_move
+
+def assign_rewards_only_for_win(game_history, winner):
+    """
+    Assign rewards only for moves that directly contribute to winning.
+    No penalties are given for any moves.
+    """
+    reward_for_win = 1.0  # Reward for the winning move
+    no_reward = 0.0  # No reward for other moves
+
+    if winner == 1:
+        # If the agent wins, assign rewards
+        for i in range(len(game_history) - 1, -1, -1):
+            board_state, move = game_history[i]
+            target = np.zeros(9)
+            
+            if i == len(game_history) - 1:
+                # Assign reward only to the winning move
+                target[move] = reward_for_win
+            else:
+                # No reward for other moves
+                target[move] = no_reward
+
+            game_history[i] = (board_state, target)
+
+    elif winner == -1 or winner == 2:
+        # If the agent loses or the game is a draw, no rewards are assigned
+        for i in range(len(game_history)):
+            board_state, move = game_history[i]
+            target = np.zeros(9)
+            target[move] = no_reward
+            game_history[i] = (board_state, target)
+
+    else:
+        raise ValueError("Invalid winner value")
+
+    return game_history
+
+def assign_rewards_for_winning_sequence(game_history, winner):
+    """
+    Assign rewards to all moves that contribute to the winning sequence.
+    """
+    reward_for_winning_sequence = 1.0  # Reward for moves that are part of the winning sequence
+
+    if winner == 1:
+        # Find the winning sequence moves
+        winning_moves = find_winning_sequence_moves(game_history)
+        
+        for i in range(len(game_history)):
+            board_state, move = game_history[i]
+            target = np.zeros(9)
+
+            # Assign reward if the move is part of the winning sequence
+            if move in winning_moves:
+                target[move] = reward_for_winning_sequence
+            else:
+                # No reward for other moves
+                target[move] = 0.0
+
+            game_history[i] = (board_state, target)
+
+    else:
+        # If the agent does not win, no rewards are assigned
+        for i in range(len(game_history)):
+            board_state, move = game_history[i]
+            target = np.zeros(9)
+            target[move] = 0.0
+            game_history[i] = (board_state, target)
+
+    return game_history
+
+def assign_rewards_and_opponent_penalty(game_history, winner):
+    """
+    Assign rewards to all moves that contribute to the winning sequence and 
+    penalize the opponent's last move if it failed to block a winning move.
+    """
+    reward_for_winning_sequence = 1.0  # Reward for moves that are part of the winning sequence
+    penalty_for_not_blocking = -0.5  # Penalty for the opponent's failure to block the winning move
+
+    if winner == 1:
+        # Find the winning sequence moves
+        winning_moves = find_winning_sequence_moves(game_history)
+
+        for i in range(len(game_history)):
+            board_state, move = game_history[i]
+            target = np.zeros(9)
+
+            # Assign reward if the move is part of the winning sequence
+            if move in winning_moves:
+                target[move] = reward_for_winning_sequence
+            else:
+                target[move] = 0.0
+
+            game_history[i] = (board_state, target)
+
+        # Apply penalty to the opponent's last move if it failed to block the winning move
+        if len(game_history) > 1:
+            last_opponent_move_index = len(game_history) - 2
+            previous_board_state, _ = game_history[last_opponent_move_index]
+            _, opponent_board_state = game_history[last_opponent_move_index + 1]
+
+            opponent_move = np.where(opponent_board_state != previous_board_state)[0][0]
+            target = np.zeros(9)
+            target[opponent_move] = penalty_for_not_blocking
+            game_history[last_opponent_move_index] = (previous_board_state, target)
+
+    else:
+        # If the agent does not win, no rewards or penalties are assigned
+        for i in range(len(game_history)):
+            board_state, move = game_history[i]
+            target = np.zeros(9)
+            target[move] = 0.0
+            game_history[i] = (board_state, target)
+
+    return game_history
+
+def find_winning_sequence_moves(game_history):
+    """
+    Find the moves that are part of the winning sequence.
+    """
+    # Assuming the last board state in game_history is the winning state
+    final_board_state, _ = game_history[-1]
+    winning_moves = []
+
+    # Check rows, columns, and diagonals for the winning sequence
+    for i in range(3):
+        # Check rows
+        if final_board_state[i*3] == final_board_state[i*3+1] == final_board_state[i*3+2] != 0:
+            winning_moves.extend([i*3, i*3+1, i*3+2])
+        # Check columns
+        if final_board_state[i] == final_board_state[i+3] == final_board_state[i+6] != 0:
+            winning_moves.extend([i, i+3, i+6])
+
+    # Check diagonals
+    if final_board_state[0] == final_board_state[4] == final_board_state[8] != 0:
+        winning_moves.extend([0, 4, 8])
+    if final_board_state[2] == final_board_state[4] == final_board_state[6] != 0:
+        winning_moves.extend([2, 4, 6])
+
+    return list(set(winning_moves))  # Remove duplicates if any
