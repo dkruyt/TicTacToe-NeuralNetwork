@@ -22,11 +22,17 @@ This code includes several functions to create visualizations for troubleshootin
 
 # Ensure interactive mode is on for live updating of plots
 plt.ion()
-figi, axi = plt.subplots()
-figo, axo = plt.subplots()
+
+global figi
 
 # Define a function to visualize the input layer of the neural network
 def visualize_input_layer(input_layer, game_number, wins_for_X, wins_for_O, draws):
+    global figi
+    if 'figi' not in globals():
+        figi, axi = plt.subplots()
+    else:
+        axi = figi.axes[0]  # Access the existing axes object
+
     clear_output(wait=True)
     axi.clear()  # Clear the axes to remove old content
 
@@ -68,8 +74,15 @@ def visualize_input_layer(input_layer, game_number, wins_for_X, wins_for_O, draw
     plt.draw()
     plt.pause(0.01)  # Adjust the pause time as needed
 
+global figo
+
 # Define function to visualize activations in the output layer
 def visualize_output_layer(output_layer_activation, board, colormap='autumn'):
+    global figo
+    if 'figo' not in globals():
+        figo, axo = plt.subplots()
+    else:
+        axo = figo.axes[0]  # Access the existing axes object
     clear_output(wait=True)
     axo.clear()  # Clear the axes to remove old content
 
@@ -193,6 +206,8 @@ global nn_fig, nn_ax
 def visualize_detailed_network(model, input_data, output_data):
     global nn_fig, nn_ax
 
+    max_neurons = 24
+
     # Initialize layer_sizes with the size of the input data
     layer_sizes = [np.prod(input_data.shape[1:])]  
 
@@ -243,7 +258,6 @@ def visualize_detailed_network(model, input_data, output_data):
             nn_ax.text(-0.17, y, 'O', ha='left', va='center', fontsize=20, color='green')
 
     # Neurons and Connections
-    max_neurons = 24
     def find_middle_neurons(max_neurons):
 
         midpoint = max_neurons // 2
@@ -261,13 +275,13 @@ def visualize_detailed_network(model, input_data, output_data):
             displayed_neurons = layer_size
             middle_neurons = []
 
-        for i, neuron_y in enumerate(np.linspace(0, 1, displayed_neurons, endpoint=False) + v_spacing / 2.):
+        for i, neuron_y in enumerate(np.linspace(0, 1, displayed_neurons, endpoint=False) + v_spacing / 3.):
             neuron_color = 'lightgray' if i in middle_neurons and layer_size > max_neurons else layer_colors[n % len(layer_colors)]
             circle = plt.Circle((layer_x, neuron_y), 0.012, color=neuron_color, ec='k', zorder=4)
             nn_ax.add_artist(circle)
 
             if n > 0:
-                for j, prev_neuron_y in enumerate(np.linspace(0, 1, min(layer_sizes[n - 1], max_neurons), endpoint=False) + v_spacing / 2.):
+                for j, prev_neuron_y in enumerate(np.linspace(0, 1, min(layer_sizes[n - 1], max_neurons), endpoint=False) + v_spacing / 3.):
                     color = rainbow(float(i + j) / (displayed_neurons + min(layer_sizes[n - 1], max_neurons)))
                     line = plt.Line2D([layer_x - h_spacing, layer_x], [prev_neuron_y, neuron_y], c=color, alpha=0.7)
                     nn_ax.add_artist(line)
@@ -369,6 +383,6 @@ def plot_cumulative_statistics(wins_for_X, wins_for_O, draws, total_games, batch
     stats_lines[2].set_data(x_data, draws)  # Update Draws line
 
     # Redraw the plot
-    stats_fig.canvas.draw()
+    plotstats_fig.canvas.draw()
     plt.pause(0.001)  # Pause to update the plot
 
