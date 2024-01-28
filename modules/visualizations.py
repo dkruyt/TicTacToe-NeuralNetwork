@@ -369,12 +369,13 @@ def plot_cumulative_statistics(wins_for_X, wins_for_O, draws, total_games, batch
         stats_ax.set_ylabel('Cumulative Count')
         stats_ax.set_title('Game Statistics Over Time')
         stats_ax.legend(labels)
-
-    stats_ax.vlines = []
-    # Add vertical dotted lines every batch_size games
-    for x in range(0, total_games, batch_size):
-        line = stats_ax.axvline(x, linestyle='dotted', color='grey')
-        stats_ax.vlines.append(line)
+        
+    # Slow with small batch size
+    # stats_ax.vlines = []
+    # # Add vertical dotted lines every batch_size games
+    # for x in range(0, total_games, batch_size):
+    #     line = stats_ax.axvline(x, linestyle='dotted', color='grey')
+    #     stats_ax.vlines.append(line)
 
     # Update the data
     x_data = range(len(wins_for_X))
