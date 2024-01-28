@@ -171,19 +171,19 @@ def simulate_game_and_train(model, epsilon):
         else:
             # For 'Value' model type, use epsilon_greedy_move_value strategy
             if args.model_type == 'Value':  
-                move = epsilon_greedy_move_value(model, board, player, epsilon, show_text)
+                move = epsilon_greedy_move_value(model, board, player, epsilon, show_text, board_state)
             else:
                 # For other model types, use specified strategy for each agent
                 current_strategy = args.agent_x_strategy if player == 1 else args.agent_o_strategy
 
                 if current_strategy == 'epsilon_greedy':
-                    move = epsilon_greedy_move_default(model, board, player, epsilon, show_text)
+                    move = epsilon_greedy_move_default(model, board, player, epsilon, show_text, board_state)
                 elif current_strategy == 'random':
                     move = random_move_selection(board, show_text)
                 elif current_strategy == 'softmax':
-                    move = softmax_exploration(model, board, show_text)
+                    move = softmax_exploration(model, board, show_text, player, board_state)
                 elif current_strategy == 'ucb':
-                    move = ucb_move_selection(model, board, show_text, c_param=0.1)
+                    move = ucb_move_selection(model, board, show_text, player, board_state, c_param=0.1)
 
         if args.delay:
             time.sleep(1)  # Pauses the program

@@ -83,7 +83,7 @@ def switch_player(player):
     return -player
 
 # Function to select the next move using epsilon-greedy strategy
-def epsilon_greedy_move_default(model, board, player, epsilon, show_text):
+def epsilon_greedy_move_default(model, board, player, epsilon, show_text, board_state):
     if random.random() < epsilon:
         # Exploration: Choose a random move
         valid_moves = [i for i in range(9) if board[i] == 0]
@@ -92,9 +92,8 @@ def epsilon_greedy_move_default(model, board, player, epsilon, show_text):
         return random.choice(valid_moves)
     else:
         # Exploitation: Choose the best move based on model prediction
-        board_state = np.array([board])
         #predictions = model.predict(board_state, verbose=0)[0]
-        predictions = predict_with_cache(model, board_state, player)[0]
+        predictions = predict_with_cache(model, board_state, player, show_text)[0]
         for i in range(9):
             if board[i] != 0:
                 predictions[i] = -1e7
@@ -103,7 +102,7 @@ def epsilon_greedy_move_default(model, board, player, epsilon, show_text):
         return np.argmax(predictions)
 
 
-def epsilon_greedy_move_value(model, board, player, epsilon, show_text):
+def epsilon_greedy_move_value(model, board, player, epsilon, show_text, board_state):
     if random.random() < epsilon:
         # Exploration: Choose a random move
         valid_moves = [i for i in range(9) if board[i] == 0]
@@ -120,7 +119,7 @@ def epsilon_greedy_move_value(model, board, player, epsilon, show_text):
                 new_board[i] = player
                 board_state = np.array([new_board])
                 #predicted_value = model.predict(board_state, verbose=0)[0]
-                predicted_value = predict_with_cache(model, board_state, player)[0]
+                predicted_value = predict_with_cache(model, board_state, player, show_text)[0]
                 if predicted_value > best_value:
                     best_value = predicted_value
                     best_move = i
@@ -148,12 +147,12 @@ def random_move_selection(board, show_text):
     return random.choice(valid_moves)
 
 # Function to select next move using softmax exploration
-def softmax_exploration(model, board, show_text):
+def softmax_exploration(model, board, show_text, player, board_state):
     if show_text:
         print("AI is selecting a move using softmax exploration.")
     # Getting Q values from the model for current state
     #Q_values = model.predict(np.array([board]), verbose=0)[0]
-    Q_values = predict_with_cache(model, np.array([board]), player)[0]
+    Q_values = predict_with_cache(model, board_state, player, show_text)[0]
     # Calculating policy probabilities using softmax
     policy = np.exp(Q_values) / np.sum(np.exp(Q_values))
 
@@ -174,14 +173,14 @@ def softmax_exploration(model, board, show_text):
 # Initialize action counts
 action_counts = [0]*9
 
-def ucb_move_selection(model, board, show_text,c_param=0.1):
+def ucb_move_selection(model, board, show_text, player, board_state, c_param=0.1):
     global action_counts
     if show_text:
         print("AI is selecting a move using Upper Confidence Bound strategy.")
   
     # Get Q values for the board state from the model
     #Q_values = model.predict(np.array([board]), verbose=0)[0]
-    Q_values = predict_with_cache(model, (np.array([board]), player)[0]
+    Q_values = predict_with_cache(model, board_state, player, show_text)[0]
     
     # Get the count of total actions taken
     total_actions = sum(action_counts)
@@ -205,7 +204,7 @@ def ndarray_hash(array):
     """Create a hash for a numpy array."""
     return hash(array.tobytes())
 
-def predict_with_cache(model, input_data, player):
+def predict_with_cache(model, input_data, player, show_text):
     # Create a hash for the input data
     input_hash = ndarray_hash(input_data)
 
