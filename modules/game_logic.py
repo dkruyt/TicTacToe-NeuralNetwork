@@ -1,5 +1,6 @@
 import random
 import numpy as np
+from colorama import Fore, Back, Style
 
 """
 This script provides various functions that facilitate the gameplay and analysis of tic-tac-toe.
@@ -92,7 +93,8 @@ def epsilon_greedy_move_default(model, board, player, epsilon, show_text):
     else:
         # Exploitation: Choose the best move based on model prediction
         board_state = np.array([board])
-        predictions = model.predict(board_state, verbose=0)[0]
+        #predictions = model.predict(board_state, verbose=0)[0]
+        predictions = predict_with_cache(model, board_state, player)[0]
         for i in range(9):
             if board[i] != 0:
                 predictions[i] = -1e7
@@ -117,7 +119,8 @@ def epsilon_greedy_move_value(model, board, player, epsilon, show_text):
                 new_board = board.copy()
                 new_board[i] = player
                 board_state = np.array([new_board])
-                predicted_value = model.predict(board_state, verbose=0)[0]
+                #predicted_value = model.predict(board_state, verbose=0)[0]
+                predicted_value = predict_with_cache(model, board_state, player)[0]
                 if predicted_value > best_value:
                     best_value = predicted_value
                     best_move = i
@@ -149,8 +152,8 @@ def softmax_exploration(model, board, show_text):
     if show_text:
         print("AI is selecting a move using softmax exploration.")
     # Getting Q values from the model for current state
-    Q_values = model.predict(np.array([board]), verbose=0)[0]
-
+    #Q_values = model.predict(np.array([board]), verbose=0)[0]
+    Q_values = predict_with_cache(model, np.array([board]), player)[0]
     # Calculating policy probabilities using softmax
     policy = np.exp(Q_values) / np.sum(np.exp(Q_values))
 
@@ -177,7 +180,8 @@ def ucb_move_selection(model, board, show_text,c_param=0.1):
         print("AI is selecting a move using Upper Confidence Bound strategy.")
   
     # Get Q values for the board state from the model
-    Q_values = model.predict(np.array([board]), verbose=0)[0]
+    #Q_values = model.predict(np.array([board]), verbose=0)[0]
+    Q_values = predict_with_cache(model, (np.array([board]), player)[0]
     
     # Get the count of total actions taken
     total_actions = sum(action_counts)
@@ -193,3 +197,27 @@ def ucb_move_selection(model, board, show_text,c_param=0.1):
     action_counts[move] += 1
   
     return move
+
+# Cache board states, faster lookup
+prediction_cache = {}
+
+def ndarray_hash(array):
+    """Create a hash for a numpy array."""
+    return hash(array.tobytes())
+
+def predict_with_cache(model, input_data, player):
+    # Create a hash for the input data
+    input_hash = ndarray_hash(input_data)
+
+    # Check if the result is in cache
+    if input_hash in prediction_cache:
+        if show_text:
+            print("Prediction " + (Fore.GREEN + 'O' if player == -1 else Fore.RED + 'X') + Style.RESET_ALL + ": from cache")
+        return prediction_cache[input_hash]
+
+    # Compute and store the result if not in cache
+    result = model.predict(input_data, verbose=0)
+    prediction_cache[input_hash] = result
+    if show_text:
+        print("Prediction " + (Fore.GREEN + 'O' if player == -1 else Fore.RED + 'X') + Style.RESET_ALL + ": neural net")
+    return result

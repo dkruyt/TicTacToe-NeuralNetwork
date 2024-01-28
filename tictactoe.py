@@ -3,13 +3,6 @@ import argparse
 from art import *
 import sys
 
-## Local stuff
-from modules.model import *
-from modules.visualizations import *
-from modules.game_logic import *
-from modules.rewards import *
-from modules.text import *
-
 # Set up the argument parser
 parser = argparse.ArgumentParser(description='Run Tic-Tac-Toe game with optional visuals.')
 parser.add_argument('--show-visuals', action='store_true', 
@@ -44,9 +37,13 @@ parser.add_argument('--model-type', type=str,
 parser.add_argument('--reward', type=str,
                     choices=['block', 'progress', 'penalty', 'simple', 'future', 'combined', 'win_moves', 'winning_sequence', 'opponent_penalty'], default='progress', 
                     help='Select the reward strategy for the AI agent.')
-parser.add_argument('--strategy', type=str,
+# Add new arguments for specifying strategies for Agent X and Agent O
+parser.add_argument('--agent-x-strategy', type=str,
                     choices=['epsilon_greedy', 'random', 'softmax', 'ucb'], default='epsilon_greedy', 
-                    help='Select the move selection strategy for the AI agent.')
+                    help='Strategy for Agent X (default: epsilon_greedy)')
+parser.add_argument('--agent-o-strategy', type=str,
+                    choices=['epsilon_greedy', 'random', 'softmax', 'ucb'], default='epsilon_greedy', 
+                    help='Strategy for Agent O (default: epsilon_greedy)')
 args = parser.parse_args()
 
 # Print the argument values
@@ -55,7 +52,7 @@ print("Show Visuals:      ", args.show_visuals)
 print("Show Text:         ", args.show_text)
 print("Delay:             ", args.delay)
 print("Human Player:      ", args.human_player)
-print("Alternate moves:   ", args.alternate_moves)
+print("Alternate Moves:   ", args.alternate_moves)
 print("Number of Games:   ", args.games)
 print("Model Name:        ", args.model_name)
 print("Dense Units:       ", args.dense_units)
@@ -65,9 +62,18 @@ print("Epsilon End:       ", args.epsilon_end)
 print("Epsilon Decay:     ", args.epsilon_decay)
 print("Model Type:        ", args.model_type)
 print("Reward Strategy:   ", args.reward)
-print("Move Strategy:     ", args.strategy)
+print("Agent X Strategy:  ", args.agent_x_strategy)
+print("Agent O Strategy:  ", args.agent_o_strategy)
 
 print()
+
+## Local stuff, load after arg, so help is display faster.
+
+from modules.model import *
+from modules.visualizations import *
+from modules.game_logic import *
+from modules.rewards import *
+from modules.text import *
 
 show_text = args.show_text
 
@@ -119,9 +125,9 @@ def update_model(model, batch_game_history):
             X_train.append(board_state)
             y_train.append(target)
 
-    model.fit(np.array(X_train), np.array(y_train), verbose=0, batch_size=32, callbacks=[tensorboard_callback])
+    model.fit(np.array(X_train), np.array(y_train), epochs=10, verbose=0, batch_size=32, callbacks=[tensorboard_callback])
 
-# Main 
+# Main
 def simulate_game_and_train(model, epsilon):
     board = [0]*9
     player = starting_player
@@ -144,7 +150,8 @@ def simulate_game_and_train(model, epsilon):
         # Adjust board state based on current player
         board_state = np.array([[-x if player == -1 else x for x in board]])
 
-        predictions = model.predict(board_state, verbose=0)
+        #predictions = model.predict(board_state, verbose=0)
+        #predictions = predict_with_cache(board_state, player)
 
         if args.show_text:
             #visualize_detailed_network_text(model, board_state , predictions)
@@ -158,21 +165,24 @@ def simulate_game_and_train(model, epsilon):
         if (args.human_player == 'X') or (args.human_player == 'O') or (args.show_visuals):
             visualize_input_layer(board, game_number, wins_for_X, wins_for_O, draws)
 
-        # Determine the move based on player type
+        # Determine the move based on player, strategy, and model type
         if (args.human_player == 'X' and player == 1) or (args.human_player == 'O' and player == -1):
             move = get_human_move(board)
         else:
-             # Strategy for move selection
+            # For 'Value' model type, use epsilon_greedy_move_value strategy
             if args.model_type == 'Value':  
                 move = epsilon_greedy_move_value(model, board, player, epsilon, show_text)
             else:
-                if args.strategy == 'epsilon_greedy':
+                # For other model types, use specified strategy for each agent
+                current_strategy = args.agent_x_strategy if player == 1 else args.agent_o_strategy
+
+                if current_strategy == 'epsilon_greedy':
                     move = epsilon_greedy_move_default(model, board, player, epsilon, show_text)
-                elif args.strategy == 'random':
+                elif current_strategy == 'random':
                     move = random_move_selection(board, show_text)
-                elif args.strategy == 'softmax':
+                elif current_strategy == 'softmax':
                     move = softmax_exploration(model, board, show_text)
-                elif args.strategy == 'ucb':
+                elif current_strategy == 'ucb':
                     move = ucb_move_selection(model, board, show_text, c_param=0.1)
 
         if args.delay:
@@ -291,7 +301,8 @@ batch_game_history = []
 
 # Generate ASCII art
 print (text2art("Shall we play a game?"))
-time.sleep(5)  # Pauses the program
+if args.delay:
+    time.sleep(3)  # Pauses the program
 
 if args.show_text:
     clear_screen()
