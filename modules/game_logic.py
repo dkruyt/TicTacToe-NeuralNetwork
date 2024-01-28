@@ -101,7 +101,6 @@ def epsilon_greedy_move_default(model, board, player, epsilon, show_text, board_
             print("\r\033[KAI is exploiting: Chose the best predicted move for.", end='')
         return np.argmax(predictions)
 
-
 def epsilon_greedy_move_value(model, board, player, epsilon, show_text, board_state):
     if random.random() < epsilon:
         # Exploration: Choose a random move
@@ -204,19 +203,23 @@ def ndarray_hash(array):
     """Create a hash for a numpy array."""
     return hash(array.tobytes())
 
-def predict_with_cache(model, input_data, player, show_text):
+# Implement via arg to enable or disable
+def predict_with_cache(model, input_data, player, show_text, use_cache=True):
     # Create a hash for the input data
     input_hash = ndarray_hash(input_data)
 
-    # Check if the result is in cache
-    if input_hash in prediction_cache:
+    # Check if the result is in cache and if caching is enabled
+    if use_cache and input_hash in prediction_cache:
         if show_text:
             print("Prediction " + (Fore.GREEN + 'O' if player == -1 else Fore.RED + 'X') + Style.RESET_ALL + ": from cache")
         return prediction_cache[input_hash]
 
     # Compute and store the result if not in cache
     result = model.predict(input_data, verbose=0)
-    prediction_cache[input_hash] = result
+    
+    if use_cache:
+        prediction_cache[input_hash] = result
+
     if show_text:
         print("Prediction " + (Fore.GREEN + 'O' if player == -1 else Fore.RED + 'X') + Style.RESET_ALL + ": neural net")
     return result

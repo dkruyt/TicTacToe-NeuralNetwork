@@ -44,6 +44,7 @@ parser.add_argument('--agent-x-strategy', type=str,
 parser.add_argument('--agent-o-strategy', type=str,
                     choices=['epsilon_greedy', 'random', 'softmax', 'ucb'], default='epsilon_greedy', 
                     help='Strategy for Agent O (default: epsilon_greedy)')
+
 args = parser.parse_args()
 
 # Print the argument values
