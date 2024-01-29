@@ -7,19 +7,26 @@ from tensorflow.keras import layers
 import numpy as np
 
 """
-This script provides several utility functions to facilitate interactions with and visualization of a neural network model within a terminal, in the context of a tic-tac-toe game.
+This script includes a variety of utility functions for handling and visualizing a neural network model within a terminal, particularly for a Tic-Tac-Toe game. These functions enhance user interaction with the model and the game, providing insights into the AI's decision-making process and the game's dynamics.
 
-'clear_screen' and 'cursor_topleft' are functions to clear the screen and move the cursor to the top left, preparing for fresh screen output.
+Utility Functions:
 
-'print_board' displays the current state of the game board with coloured symbols for each player or an empty space.
+- 'clear_screen': Clears the terminal screen for fresh output, compatible with different operating systems.
+- 'cursor_topleft': Positions the cursor at the top left of the terminal, preparing for new output.
+- 'move_cursor(x, y)': Moves the cursor to a specified (x, y) position within the terminal.
 
-'print_output_layer' prints the activation outputs of the final layer of the model, for each possible move on the board.
+Game Display Functions:
 
-'plot_epsilon_value_text' prints a progress bar of gameplay along with the current epsilon value that determines the exploitation vs exploration ratio in the epsilon-greedy strategy.
+- 'print_board(board)': Visually displays the Tic-Tac-Toe board in the terminal, using colored symbols to represent each player's moves.
+- 'print_output_layer(output_layer_activation, board)': Outputs the activation values of the final layer in the model, showing the model's assessment for each possible move on the current board.
+- 'plot_epsilon_value_text(epsilon_value, game_number, total_games)': Displays a progress bar for the game along with the current epsilon value, illustrating the balance between exploitation and exploration in the AI's strategy.
 
-'print_model_weights_and_biases' prints statistics, like mean and standard deviation, of the weights and biases of each layer in the given model. If the layer is of type SimpleRNN, it splits the weights into input weights and recurrent weights.
+Model Analysis Functions:
 
-'visualize_detailed_network_text' prints the detailed structure of the neural network, displaying the type and number of neurons present in each layer. It also prints an example of the input and output data. In the context of a game, each neuron could represent a possible move. 
+- 'print_model_weights_and_biases(model)': Prints detailed statistics (mean, standard deviation, min, max) of the weights and biases for each layer in the model. For SimpleRNN layers, it differentiates between input and recurrent weights.
+- 'visualize_detailed_network_text(model, input_data, output_data)': Provides a comprehensive view of the neural network's structure, including the type and number of neurons in each layer and an example of input and output data. This function is instrumental in understanding the architecture and data flow within the model.
+
+Together, these functions offer an extensive toolkit for interacting with and understanding the neural network model and the game of Tic-Tac-Toe, from basic gameplay visualization to in-depth analysis of the AI model.
 """
 
 def clear_screen():
@@ -30,6 +37,12 @@ def clear_screen():
         
 def cursor_topleft():
     print("\033[H", end='')
+
+def move_cursor(x, y):
+    """
+    Move the cursor to the specified (x, y) position.
+    """
+    print(f"\033[{y};{x}H", end='')
 
 # Function to print the current state of the board
 def print_board(board):
@@ -43,6 +56,7 @@ def print_board(board):
     print()
 
 def print_output_layer(output_layer_activation, board):
+    move_cursor(0, 14)
     if output_layer_activation.size == 1:
         # Convert the numpy value to a Python scalar
         value = output_layer_activation.item()  # Extracts the scalar value from the array
@@ -79,6 +93,7 @@ def plot_epsilon_value_text(epsilon_value, game_number, total_games):
     print(f"Game {game_number} of {total_games} {progress_bar} Epsilon: {epsilon_value:.4f}")
 
 def print_model_weights_and_biases(model):
+    print(f"\033[28;0H", end='')
     for i, layer in enumerate(model.layers):
         weights_biases = layer.get_weights()
         if len(weights_biases) > 0:
