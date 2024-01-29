@@ -208,26 +208,33 @@ def ucb_move_selection(model, board, show_text, player, board_state, c_param=0.1
   
     return move
 
-def minimax(board, player):
+### minimax_move and minimax_with_epsilon functions as well to pass alpha and beta.
+def minimax(board, player, alpha=-float('inf'), beta=float('inf')):
     winner = check_winner_minimax(board)
     if winner is not None:
         return winner
 
-    if player == 1:  # Maximizing player (O)
+    if player == 1:  # Maximizing player
         best_val = -float('inf')
         for move in get_valid_moves(board):
             board[move] = player
-            val = minimax(board, -player)
+            val = minimax(board, -player, alpha, beta)
             board[move] = 0
             best_val = max(best_val, val)
+            alpha = max(alpha, best_val)
+            if beta <= alpha:
+                break
         return best_val
-    else:  # Minimizing player (X)
+    else:  # Minimizing player
         best_val = float('inf')
         for move in get_valid_moves(board):
             board[move] = player
-            val = minimax(board, -player)
+            val = minimax(board, -player, alpha, beta)
             board[move] = 0
             best_val = min(best_val, val)
+            beta = min(beta, best_val)
+            if beta <= alpha:
+                break
         return best_val
 
         
