@@ -3,23 +3,35 @@ import numpy as np
 from colorama import Fore, Back, Style
 
 """
-This script provides various functions that facilitate the gameplay and analysis of tic-tac-toe.
+This script includes a variety of functions to support gameplay and analysis in Tic-Tac-Toe, each contributing to the game's artificial intelligence and user interaction capabilities.
 
-The 'check_winner' function determines the status of the game: win for 'X' (-1), win for 'O' (1), draw (2), or game still ongoing (0).
+Key Functions:
 
-'summarize_game_history' collates the win/loss/draw statistics from a set of played games stored in game_history.
+- 'check_winner': Determines the game's status by identifying wins for 'X' (-1), 'O' (1), draws (2), or ongoing games (0).
+- 'summarize_game_history': Gathers win, loss, and draw statistics from played games stored in the game history.
+- 'make_move': Updates the game board with a player's move after validating the move.
+- 'get_human_move': Allows human players to input their move, ensuring it's a valid selection.
+- 'switch_player': Alternates the current player between 'X' and 'O' after each turn.
 
-'make_move' updates the game board with a valid move made by a player. The function checks whether the required cell is empty (0), if it is, the function updates the board with the player's move and returns True; if not, it simply returns False.
+Strategic AI Functions:
 
-'get_human_move' is a function for human players, which prompts them for a cell to select for the next move. It ensures the input is valid (existing cell number and not already occupied).
+- 'epsilon_greedy_move_default': Implements the epsilon-greedy strategy, balancing between exploiting learned strategies and exploring new moves.
+- 'epsilon_greedy_move_value': A variant of the epsilon-greedy strategy, tailored for value-based models, focusing on the most valuable moves.
+- 'random_move_selection': Selects a move randomly, useful for exploration.
+- 'softmax_exploration': Chooses moves based on a probability distribution derived from the softmax of predicted Q-values.
+- 'ucb_move_selection': Uses the Upper Confidence Bound strategy, combining the value of moves with their uncertainty.
+- 'minimax_move': Employs the Minimax algorithm, a classic decision rule for minimizing the possible loss in a worst-case scenario.
+- 'minimax_with_epsilon': Combines the Minimax strategy with an epsilon-greedy approach for a balanced decision-making process.
 
-'switch_player' is a simple utility function which switches between players after every turn - if the current player is 'X', it changes it to 'O' and vice versa.
+Utility Functions:
 
-'epsilon_greedy_move' implements the epsilon-greedy strategy for choosing the next move for an RL agent. It involves a trade-off between exploitation (using what the model has learnt to take the best move) and exploration (trying out random moves).
+- 'check_potential_win': Checks if a win is possible in the next move, aiding in blocking strategies.
+- 'get_valid_moves': Returns a list of valid moves based on the current board state.
+- 'flush_cache': Clears the prediction cache to maintain performance.
+- 'predict_with_cache': Optimizes predictions using a caching mechanism, reducing computation for previously encountered states.
+- 'print_cache_stats': Displays statistics about cache usage, including hit and miss ratios.
 
-The exploration occurs with a probability of epsilon and results in a random selection of a valid cell. The exploitation move, on the other hand, involves prediction of the reward for each cell based on the current board state, and selection of the cell with the highest predicted reward.
-
-'check_potential_win' is a helper function which checks if any of the players can potentially win in the next move i.e., they have two cells in a row, column or diagonal, and can win the game if they occupy the third one.
+These functions collectively enable sophisticated gameplay, ranging from basic game mechanics to advanced AI strategies, providing a rich and interactive Tic-Tac-Toe experience.
 """
 
 # Function to check if there is a winner or draw
@@ -196,30 +208,144 @@ def ucb_move_selection(model, board, show_text, player, board_state, c_param=0.1
   
     return move
 
+def minimax(board, player):
+    winner = check_winner_minimax(board)
+    if winner is not None:
+        return winner
+
+    if player == 1:  # Maximizing player (O)
+        best_val = -float('inf')
+        for move in get_valid_moves(board):
+            board[move] = player
+            val = minimax(board, -player)
+            board[move] = 0
+            best_val = max(best_val, val)
+        return best_val
+    else:  # Minimizing player (X)
+        best_val = float('inf')
+        for move in get_valid_moves(board):
+            board[move] = player
+            val = minimax(board, -player)
+            board[move] = 0
+            best_val = min(best_val, val)
+        return best_val
+
+        
+def check_winner_minimax(board):
+    for i in range(3):
+        # Check rows
+        if sum(board[i*3:(i+1)*3]) == 3:
+            return 1
+        elif sum(board[i*3:(i+1)*3]) == -3:
+            return -1
+
+        # Check columns
+        if sum(board[i::3]) == 3:
+            return 1
+        elif sum(board[i::3]) == -3:
+            return -1
+
+    # Check diagonals
+    if board[0] + board[4] + board[8] == 3 or board[2] + board[4] + board[6] == 3:
+        return 1
+    elif board[0] + board[4] + board[8] == -3 or board[2] + board[4] + board[6] == -3:
+        return -1
+
+    # Check for draw
+    if 0 not in board:
+        return 0  # Draw
+
+    return None  # Game ongoing
+    
+def minimax_move(board, player, show_text):
+    #print(f"Minimax move for player {'X' if player == 1 else 'O'}")
+    #best_val = -float('inf')
+    best_val = -float('inf') if player == 1 else float('inf')
+    best_move = None
+    moves = get_valid_moves(board)
+
+    for move in moves:
+        board[move] = player
+        val = minimax(board, -player)  # Recursively call minimax with the opposite player
+        board[move] = 0
+    
+        #print(f"Move {move}: Score {val}")
+
+        if player == 1:  # Maximize for player X
+            if val > best_val:
+                best_val = val
+                best_move = move
+        else:  # Minimize for player O
+            if val < best_val:
+                best_val = val
+                best_move = move
+
+    #print(f"Chosen move: {best_move}, Score: {best_val}")
+
+    return best_move
+
+def minimax_with_epsilon(board, player, epsilon, show_text):
+    if random.random() < epsilon:
+        # With probability epsilon, choose a random move
+        valid_moves = [i for i in range(9) if board[i] == 0]
+        return random.choice(valid_moves)
+    else:
+        # Otherwise, use the Minimax algorithm to choose the best move
+        return minimax_move(board, player, show_text)
+
+def get_valid_moves(board):
+    return [i for i, cell in enumerate(board) if cell == 0]
+
 # Cache board states, faster lookup
 prediction_cache = {}
+# Global variables for cache hit and miss counters
+cache_hits = 0
+cache_misses = 0
 
 def ndarray_hash(array):
     """Create a hash for a numpy array."""
     return hash(array.tobytes())
 
-# Implement via arg to enable or disable
+# Function to flush the cache
+def flush_cache():
+    global prediction_cache
+    prediction_cache.clear()
+    #print(f"\033[20;0H", end='')
+    #print("Cache has been flushed.")
+
+# TODO: Implement via arg to enable or disable
 def predict_with_cache(model, input_data, player, show_text, use_cache=True):
+    global cache_hits, cache_misses
     # Create a hash for the input data
     input_hash = ndarray_hash(input_data)
 
     # Check if the result is in cache and if caching is enabled
     if use_cache and input_hash in prediction_cache:
         if show_text:
-            print("Prediction " + (Fore.GREEN + 'O' if player == -1 else Fore.RED + 'X') + Style.RESET_ALL + ": from cache")
+            print_cache_stats()
+            #print("Prediction " + (Fore.GREEN + 'O' if player == -1 else Fore.RED + 'X') + Style.RESET_ALL + ": from cache")
+
+        cache_hits += 1
         return prediction_cache[input_hash]
 
     # Compute and store the result if not in cache
     result = model.predict(input_data, verbose=0)
     
-    if use_cache:
-        prediction_cache[input_hash] = result
+    prediction_cache[input_hash] = result
+    cache_misses += 1
 
     if show_text:
-        print("Prediction " + (Fore.GREEN + 'O' if player == -1 else Fore.RED + 'X') + Style.RESET_ALL + ": neural net")
+        print_cache_stats()
+        #print("Prediction " + (Fore.GREEN + 'O' if player == -1 else Fore.RED + 'X') + Style.RESET_ALL + ": neural net")
     return result
+
+def print_cache_stats():
+    global cache_hits, cache_misses
+    total_accesses = cache_hits + cache_misses
+    hit_miss_ratio = cache_hits / total_accesses if total_accesses > 0 else 0
+    cache_size = len(prediction_cache)
+    print(f"\033[22;0H", end='')
+    print(f"Cache Hits: {cache_hits}")
+    print(f"Cache Misses: {cache_misses}")
+    print(f"Hit/Miss Ratio: {hit_miss_ratio:.2f}")  # formatted to two decimal place
+    print(f"Number of Items in Cache: {cache_size}")
