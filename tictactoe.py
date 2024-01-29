@@ -1,49 +1,68 @@
 import time
 import argparse
-from art import *
 import sys
 
-# Set up the argument parser
-parser = argparse.ArgumentParser(description='Run Tic-Tac-Toe game with optional visuals.')
+"""
+This script facilitates running a Tic-Tac-Toe game with various customizable options, particularly for AI training and visualization. It includes argument parsing for configuring game settings and AI strategies, and integrates functions for game logic, AI model interactions, and visual outputs. Key features include the ability to toggle visuals, set AI strategies, choose model types, and define reward strategies.
+
+Main Components:
+
+- Argument Parsing: Enables customization of game settings such as visuals, AI strategies, number of games, and model parameters.
+- Game Simulation: Manages the gameplay loop, alternating between human and AI players based on the configuration.
+- AI Strategy Implementation: Employs various strategies (e.g., epsilon-greedy, softmax, UCB) for AI decision-making.
+- Model Training: Periodically updates the AI model based on batches of game outcomes, applying specified reward strategies.
+- Visualization: If enabled, displays the game board, model predictions, and training statistics in real-time.
+- Model Saving: Offers the option to save the trained model at the end of the session or upon interruption.
+
+The script is intended for users interested in AI training, game theory, and real-time visualization of AI decision processes in a controlled, turn-based game environment.
+"""
+
+# Set up the argument parser with an extended description
+parser = argparse.ArgumentParser(description=(
+    'Run a customizable Tic-Tac-Toe game simulation with AI training and visual analytics. '
+    'This script allows users to configure game settings, AI strategies, and model parameters, '
+    'and includes real-time visualizations for game progress and AI behavior analysis.'
+))
+
+# Define arguments with more descriptive help messages
 parser.add_argument('--show-visuals', action='store_true', 
-                    help='Enable game visuals (default: False)')
+                    help='Enables real-time visualizations of the game board and AI predictions, enhancing the interactive experience.')
 parser.add_argument('--show-text', action='store_true', 
-                    help='Enable game text (default: False)')
+                    help='Activates text-based output for game events and AI decisions, useful for detailed monitoring of game progress.')
 parser.add_argument('--delay', action='store_true', 
-                    help='Add delay (default: False)')
+                    help='Introduces a delay between moves, allowing more time to observe and analyze AI behavior and game dynamics.')
 parser.add_argument('--human-player', type=str, choices=['X', 'O', 'None'], default='None', 
-                    help='Play as a human player with X or O, or None for AI vs AI (default: None)')
+                    help='Allows a human player to participate as X or O against the AI, or set to None for AI vs AI games.')
 parser.add_argument('--alternate-moves', action='store_true', 
-                    help='Alternate moves between X and O players (default: False)')
+                    help='Alternates the starting player between X and O in successive games, ensuring balanced gameplay.')
 parser.add_argument('--games', type=int, default=10, 
-                    help='Number of games to play (default: 10)')
+                    help='Specifies the total number of games to be played in the simulation, controlling the length of the training session.')
 parser.add_argument('--batch-size', type=int, default=None, 
-                    help='Batch size for updating training the model, default a tenth from the number of games.')
+                    help='Determines the batch size for model updates, with a default of one-tenth the total number of games.')
 parser.add_argument('--model-name', type=str, default='tic_tac_toe_model.keras', 
-                    help='Filename for saving/loading the model (default: tic_tac_toe_model.keras)')
+                    help='Sets the filename for saving or loading the AI model, facilitating model reuse and continuous training.')
 parser.add_argument('--dense-units', type=int, default=32, 
-                    help='Number of Neurons in the Dense layers (default: 32)')
+                    help='Defines the number of neurons in each Dense layer of the neural network, impacting the model\'s complexity.')
 parser.add_argument('--dropout-rate', type=float, default=0.2, 
-                    help='Dropout rate for the Dropout layers (default: 0.2)')
+                    help='Sets the dropout rate in Dropout layers, a technique to prevent overfitting in the neural network.')
 parser.add_argument('--epsilon-start', type=float, default=1.0, 
-                    help='Starting value of epsilon for epsilon-greedy strategy (default: 1.0)')
+                    help='Initial value of epsilon in epsilon-greedy strategy, governing the balance between exploration and exploitation.')
 parser.add_argument('--epsilon-end', type=float, default=0.1, 
-                    help='Ending value of epsilon for epsilon-greedy strategy (default: 0.1)')
+                    help='Final value of epsilon after decay, indicating the strategy\'s shift towards more exploitation over time.')
 parser.add_argument('--epsilon-decay', type=float, default=0.99, 
-                    help='Decay rate of epsilon after each game (default: 0.99)')
+                    help='Epsilon decay rate after each game, controlling the rate at which the strategy moves from exploration to exploitation.')
 parser.add_argument('--model-type', type=str, 
                     choices=['MLP', 'Policy', 'Value', 'CNN', 'RNN', 'Simple'], default='MLP', 
-                    help='Define the type of AI model. Choices are Multilayer Perceptron (MLP), Policy, Value, Convolutional Neural Network (CNN), and Recurrent Neural Network (RNN).')
+                    help='Selects the AI model type, with options including MLP, CNN, RNN, and others, each offering different learning capabilities.')
 parser.add_argument('--reward', type=str,
                     choices=['block', 'progress', 'penalty', 'simple', 'future', 'combined', 'win_moves', 'winning_sequence', 'opponent_penalty'], default='progress', 
-                    help='Select the reward strategy for the AI agent.')
-# Add new arguments for specifying strategies for Agent X and Agent O
+                    help='Chooses the reward strategy for training the AI, affecting how the model learns from game outcomes.')
 parser.add_argument('--agent-x-strategy', type=str,
-                    choices=['epsilon_greedy', 'random', 'softmax', 'ucb'], default='epsilon_greedy', 
-                    help='Strategy for Agent X (default: epsilon_greedy)')
+                    choices=['epsilon_greedy', 'random', 'softmax', 'ucb', 'minimax', 'epsilon_minimax'], default='epsilon_greedy', 
+                    help='Determines the strategy for Agent X, influencing its decision-making process during the game.')
 parser.add_argument('--agent-o-strategy', type=str,
-                    choices=['epsilon_greedy', 'random', 'softmax', 'ucb'], default='epsilon_greedy', 
-                    help='Strategy for Agent O (default: epsilon_greedy)')
+                    choices=['epsilon_greedy', 'random', 'softmax', 'ucb', 'minimax', 'epsilon_minimax'], default='epsilon_greedy', 
+                    help='Sets the strategy for Agent O, similarly impacting its gameplay tactics.')
 
 args = parser.parse_args()
 
@@ -151,8 +170,9 @@ def simulate_game_and_train(model, epsilon):
         # Adjust board state based on current player
         board_state = np.array([[-x if player == -1 else x for x in board]])
 
-        #predictions = model.predict(board_state, verbose=0)
-        #predictions = predict_with_cache(board_state, player)
+        if args.show_text or args.show_visuals:
+            #predictions = model.predict(board_state, verbose=0)
+            predictions = predict_with_cache(model, board_state, player, show_text)
 
         if args.show_text:
             #visualize_detailed_network_text(model, board_state , predictions)
@@ -185,6 +205,10 @@ def simulate_game_and_train(model, epsilon):
                     move = softmax_exploration(model, board, show_text, player, board_state)
                 elif current_strategy == 'ucb':
                     move = ucb_move_selection(model, board, show_text, player, board_state, c_param=0.1)
+                elif current_strategy == 'minimax':
+                    move = minimax_move(board, player, show_text)
+                elif current_strategy == 'epsilon_minimax':
+                    move = minimax_with_epsilon(board, player, epsilon, show_text)
 
         if args.delay:
             time.sleep(1)  # Pauses the program
@@ -300,10 +324,15 @@ else:
 
 batch_game_history = []
 
-# Generate ASCII art
-print (text2art("Shall we play a game?"))
-if args.delay:
-    time.sleep(3)  # Pauses the program
+if args.human_player:
+    text = "SHALL WE PLAY A GAME?"
+    print()
+    for char in text:
+        sys.stdout.write(char)
+        sys.stdout.flush()
+        time.sleep(0.1)
+    print()
+print()
 
 if args.show_text:
     clear_screen()
@@ -317,8 +346,10 @@ for game_number in range(1, n_games + 1):
         # Check if it's time to update the model
         if game_number % batch_size == 0 or game_number == n_games:
             model_update_count += 1  # Increment the counter
+            print(f"\033[3;0H", end='')
             print(f"Updating model... (Update count: {model_update_count})")
             update_model(model, batch_game_history)
+            flush_cache()
             if args.show_visuals:
                 visualize_model_weights_and_biases(model)
             if args.show_text:
