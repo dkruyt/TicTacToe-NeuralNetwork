@@ -2,21 +2,33 @@ import numpy as np
 import random
 
 """
-This section of code defines several strategies of assigning rewards (and penalties) to the states and actions in a game of tic-tac-toe, for the purpose of training a reinforcement learning agent.
+This section of code includes a variety of reward assignment strategies for training a reinforcement learning agent in Tic-Tac-Toe. Each strategy has a unique approach to rewarding and penalizing game states and actions, designed to teach the AI optimal gameplay.
 
-Firstly, 'assign_rewards_simple' is the most basic strategy that rewards winning and penalizes losing. The rewards are discounted back from the winning move - the closer the move is to the end of the game, the lower the discount. This is based on the premise that moves closer to winning are more valuable.
+- 'assign_rewards_simple': Awards basic rewards for winning and penalties for losing. Rewards are discounted for each move away from the game's conclusion, emphasizing the value of moves leading to the outcome.
 
-Secondly, 'assign_reward_penalty' has a similar approach, but additionally includes a small penalty for each move made to encourage quicker wins.
+- 'assign_reward_penalty': Similar to 'assign_rewards_simple', but with an added penalty for each move to encourage faster wins.
 
-Next, 'assign_rewards_block' assigns an additional reward to moves that block the opponent from winning. If such a move is made, the reward for this move is updated to reward_for_block and other behaviors remain the same as 'assign_rewards_simple'.
+- 'assign_rewards_block': Gives additional rewards for moves that prevent the opponent from winning. It complements the 'assign_rewards_simple' strategy by recognizing defensive plays.
 
-Following 'assign_rewards_block' is 'assign_rewards_progress'. This strategy functions similarly to 'assign_rewards_simple', but includes incremental rewards for each move leading to a win, encouraging moves that progress the game towards a win.
+- 'assign_rewards_progress': Builds on 'assign_rewards_simple' by adding incremental rewards for each move that advances the game towards a win.
 
-Finally, 'assign_rewards_future' introduces predictive rewards for moves that can potentially lead to a win in the future - encouraging foresight in the agent's strategy.
+- 'assign_rewards_future': Focuses on foresight by rewarding moves that can potentially lead to a win in future turns.
 
-The functions 'check_potential_win' and 'check_future_win' are utility functions used by reward assignment functions. 'check_potential_win' checks if either player has two in a row and thus can win in the next move, while 'check_future_win' checks if a given move can lead to a potential win in the next move by iterating through the possible following moves.
+- 'assign_rewards_combined': A comprehensive approach that combines the aspects of blocking, progress, future prediction, and move penalties.
 
-All of these strategies are different approaches towards teaching an AI to play the game optimally and can be used depending on the specific situation or the complexity of the game.
+- 'assign_rewards_only_for_win': Assigns rewards exclusively for moves that directly contribute to winning, ignoring all other moves.
+
+- 'assign_rewards_for_winning_sequence': Rewards all moves that are part of the final winning sequence, emphasizing effective strategies that lead to victory.
+
+- 'assign_rewards_and_opponent_penalty': Similar to 'assign_rewards_for_winning_sequence', but also penalizes the opponent's last move if it failed to prevent the win.
+
+Utility functions:
+
+- 'check_potential_win': Evaluates if a player is about to win in their next move.
+- 'check_future_win': Checks if a move can lead to a potential win in subsequent turns.
+- 'find_winning_sequence_moves': Identifies the moves that formed the winning sequence in a completed game.
+
+These strategies offer diverse ways to reinforce desirable behaviors in the AI, catering to different aspects of learning and decision-making in the game of Tic-Tac-Toe.
 """
 
 # Function to assign improved rewards based on game outcome
