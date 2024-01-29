@@ -5,19 +5,19 @@ from tensorflow import keras
 from tensorflow.keras import layers
 
 """
-This code includes several functions to create visualizations for troubleshooting and analyzing the performance of a neural network for a tic-tac-toe game.
+This code includes a collection of visualization functions designed for analyzing and troubleshooting the performance of a neural network in the context of a Tic-Tac-Toe game. These visualizations aid in understanding the model's decision-making process and evaluating its performance throughout the game.
 
-'visualize_input_layer' creates a colored grid to display the input layer of the neural network which represents the current state of the game.
+Visualization Functions:
 
-'visualize_output_layer' visualizes the activations of the output layer of the model, highlighting the highest activation cell which corresponds to the action chosen by the model as the next move.
+- 'visualize_input_layer': Creates a colored grid representation of the neural network's input layer, which corresponds to the current state of the Tic-Tac-Toe game board.
+- 'visualize_output_layer': Generates visualizations for the model's output layer activations, highlighting the cell with the highest activation as the model's chosen next move.
+- 'visualize_model_weights_and_biases': Offers detailed visual insights into the weights and biases of all layers in the model, aiding in the understanding of the model's learning process.
+- 'visualize_detailed_network': Provides an elaborate visual representation of the entire network's structure, including its layers, connections, and neuron counts, alongside sample input and output data.
+- 'plot_game_statistics': Visualizes game outcomes (wins, losses, draws) as a pie chart, showcasing the performance distribution of the players.
+- 'plot_epsilon_value': Displays the progression of the epsilon value over time, illustrating the exploration versus exploitation balance in the epsilon-greedy strategy.
+- 'plot_cumulative_statistics': Shows cumulative statistics of game outcomes over time, offering a broader perspective on the model's performance across multiple games.
 
-'visualize_model_weights_and_biases' provides in-depth visualizations of the weights and biases of all layers in the provided model.
-
-'visualize_detailed_network' provides a very detailed visual representation of the entire network's structure, highlighting input and output data, connections, and neuron counts for each layer of the model.
-
-'plot_game_statistics' visualizes the game outcomes as a pie chart, presenting the percentages of wins for each player and draws.
-
-'plot_epsilon_value' plots how the value of epsilon changes over time, which provides insight into how the balance of exploration and exploitation in the epsilon-greedy strategy evolves through the course of the games.
+These visualization tools play a crucial role in diagnosing model behavior, understanding game dynamics, and guiding improvements in the AI's strategy for Tic-Tac-Toe.
 """
 
 # Ensure interactive mode is on for live updating of plots
@@ -369,7 +369,7 @@ def plot_cumulative_statistics(wins_for_X, wins_for_O, draws, total_games, batch
         stats_ax.set_ylabel('Cumulative Count')
         stats_ax.set_title('Game Statistics Over Time')
         stats_ax.legend(labels)
-        
+
     # Slow with small batch size
     # stats_ax.vlines = []
     # # Add vertical dotted lines every batch_size games
