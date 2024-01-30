@@ -34,6 +34,17 @@ Utility Functions:
 These functions collectively enable sophisticated gameplay, ranging from basic game mechanics to advanced AI strategies, providing a rich and interactive Tic-Tac-Toe experience.
 """
 
+# Assuming these counters are defined outside the function and are global
+explore_counter = {1: 0, -1: 0}  # Counts explorations for each player
+exploit_counter = {1: 0, -1: 0}  # Counts exploitations for each player
+
+# Cache board states, faster lookup
+prediction_cache = {}
+# Global variables for cache hit and miss counters
+cache_hits = 0
+cache_misses = 0
+cache_flushes = 0
+
 # Function to check if there is a winner or draw
 def check_winner(board):
     for i in range(3):
@@ -82,6 +93,7 @@ def get_human_move(board):
     valid_moves = [i for i in range(9) if board[i] == 0]
     move = None
     while move not in valid_moves:
+        print(f"\033[14;0H", end='')
         try:
             move = int(input("🔢 Enter your move (0-8): "))
             if move not in valid_moves:
@@ -95,30 +107,33 @@ def switch_player(player):
     return -player
 
 # Function to select the next move using epsilon-greedy strategy
-def epsilon_greedy_move_default(model, board, player, epsilon, show_text, board_state):
+def epsilon_greedy_move_default(model, board, player, epsilon, show_text, board_state, use_cache):
     if random.random() < epsilon:
         # Exploration: Choose a random move
         valid_moves = [i for i in range(9) if board[i] == 0]
         if show_text:
-            print("\r\033[K🤖 AI is exploring: Chose a random move.", end='')
+            explore_counter[player] += 1
+            print_explore_random(player, strategy="Epsilon Greedy")            
         return random.choice(valid_moves)
     else:
         # Exploitation: Choose the best move based on model prediction
         #predictions = model.predict(board_state, verbose=0)[0]
-        predictions = predict_with_cache(model, board_state, player, show_text)[0]
+        if show_text:
+            exploit_counter[player] += 1
+            print_explore_random(player, strategy="Epsilon Greedy")
+        predictions = predict_with_cache(model, board_state, player, show_text, use_cache)[0]
         for i in range(9):
             if board[i] != 0:
                 predictions[i] = -1e7
-        if show_text:
-            print("\r\033[K 🤖 AI is exploiting: Chose the best predicted move for.", end='')
         return np.argmax(predictions)
 
-def epsilon_greedy_move_value(model, board, player, epsilon, show_text, board_state):
+def epsilon_greedy_move_value(model, board, player, epsilon, show_text, board_state, use_cache):
     if random.random() < epsilon:
         # Exploration: Choose a random move
         valid_moves = [i for i in range(9) if board[i] == 0]
         if show_text:
-            print("\r\033[K🤖 AI is exploring: Chose a random move.", end='')
+            explore_counter[player] += 1
+            print_explore_random(player, strategy="Epsilon Greedy")    
         return random.choice(valid_moves)
     else:
         # Exploitation: Choose the best move based on model prediction
@@ -130,12 +145,13 @@ def epsilon_greedy_move_value(model, board, player, epsilon, show_text, board_st
                 new_board[i] = player
                 board_state = np.array([new_board])
                 #predicted_value = model.predict(board_state, verbose=0)[0]
-                predicted_value = predict_with_cache(model, board_state, player, show_text)[0]
+                predicted_value = predict_with_cache(model, board_state, player, show_text, use_cache)[0]
                 if predicted_value > best_value:
                     best_value = predicted_value
                     best_move = i
         if show_text:
-            print("\r\033[K 🤖 AI is exploiting: Chose the best predicted move for.", end='')
+            exploit_counter[player] += 1
+            print_explore_random(player, strategy="Epsilon Greedy")
         return best_move if best_move is not None else random.choice([i for i in range(9) if board[i] == 0])
 
 
@@ -151,19 +167,21 @@ def check_potential_win(board, player, show_text):
     return False
 
 # Function to select next move
-def random_move_selection(board, show_text):
+def random_move_selection(board, show_text, player):
     valid_moves = [i for i in range(9) if board[i] == 0]
     if show_text:
-        print("🤖 AI is choosing a random move.")
+        explore_counter[player] += 1
+        print_explore_random(player, strategy="Random")    
     return random.choice(valid_moves)
 
 # Function to select next move using softmax exploration
-def softmax_exploration(model, board, show_text, player, board_state):
+def softmax_exploration(model, board, show_text, player, board_state, use_cache):
     if show_text:
-        print("🤖 AI is selecting a move using softmax exploration.")
+        exploit_counter[player] += 1
+        print_explore_random(player, strategy="SoftMax")
     # Getting Q values from the model for current state
     #Q_values = model.predict(np.array([board]), verbose=0)[0]
-    Q_values = predict_with_cache(model, board_state, player, show_text)[0]
+    Q_values = predict_with_cache(model, board_state, player, show_text, use_cache)[0]
     # Calculating policy probabilities using softmax
     policy = np.exp(Q_values) / np.sum(np.exp(Q_values))
 
@@ -184,14 +202,15 @@ def softmax_exploration(model, board, show_text, player, board_state):
 # Initialize action counts
 action_counts = [0]*9
 
-def ucb_move_selection(model, board, show_text, player, board_state, c_param=0.1):
+def ucb_move_selection(model, board, show_text, player, board_state, use_cache, c_param=0.1):
     global action_counts
     if show_text:
-        print("🤖 AI is selecting a move using Upper Confidence Bound strategy.")
+        exploit_counter[player] += 1
+        print_explore_random(player, strategy="Upper Confidence Bound")
   
     # Get Q values for the board state from the model
     #Q_values = model.predict(np.array([board]), verbose=0)[0]
-    Q_values = predict_with_cache(model, board_state, player, show_text)[0]
+    Q_values = predict_with_cache(model, board_state, player, show_text, use_cache)[0]
     
     # Get the count of total actions taken
     total_actions = sum(action_counts)
@@ -265,8 +284,6 @@ def check_winner_minimax(board):
     return None  # Game ongoing
     
 def minimax_move(board, player, show_text):
-    #print(f"Minimax move for player {'X' if player == 1 else 'O'}")
-    #best_val = -float('inf')
     best_val = -float('inf') if player == 1 else float('inf')
     best_move = None
     moves = get_valid_moves(board)
@@ -276,8 +293,6 @@ def minimax_move(board, player, show_text):
         val = minimax(board, -player)  # Recursively call minimax with the opposite player
         board[move] = 0
     
-        #print(f"Move {move}: Score {val}")
-
         if player == 1:  # Maximize for player X
             if val > best_val:
                 best_val = val
@@ -287,13 +302,18 @@ def minimax_move(board, player, show_text):
                 best_val = val
                 best_move = move
 
-    #print(f"Chosen move: {best_move}, Score: {best_val}")
+    if show_text:
+        exploit_counter[player] += 1
+        print_explore_random(player, strategy="Epsilon MiniMax")
 
     return best_move
 
 def minimax_with_epsilon(board, player, epsilon, show_text):
     if random.random() < epsilon:
         # With probability epsilon, choose a random move
+        if show_text:
+            explore_counter[player] += 1
+            print_explore_random(player, strategy="Epsilon MiniMax")    
         valid_moves = [i for i in range(9) if board[i] == 0]
         return random.choice(valid_moves)
     else:
@@ -302,13 +322,6 @@ def minimax_with_epsilon(board, player, epsilon, show_text):
 
 def get_valid_moves(board):
     return [i for i, cell in enumerate(board) if cell == 0]
-
-# Cache board states, faster lookup
-prediction_cache = {}
-# Global variables for cache hit and miss counters
-cache_hits = 0
-cache_misses = 0
-cache_flushes = 0
 
 def ndarray_hash(array):
     """Create a hash for a numpy array."""
@@ -323,7 +336,7 @@ def flush_cache():
     #print("Cache has been flushed.")
 
 # TODO: Implement via arg to enable or disable
-def predict_with_cache(model, input_data, player, show_text, use_cache=True):
+def predict_with_cache(model, input_data, player, show_text, use_cache):
     global cache_hits, cache_misses
     # Create a hash for the input data
     input_hash = ndarray_hash(input_data)
@@ -351,6 +364,18 @@ def print_cache_stats():
     total_accesses = cache_hits + cache_misses
     hit_miss_ratio = cache_hits / total_accesses if total_accesses > 0 else 0
     cache_size = len(prediction_cache)
-    print(f"\033[22;0H", end='')
+    print(f"\033[24;0H", end='')
     print(f"💾 {Fore.GREEN}Cache Hits{Style.RESET_ALL}: {cache_hits}  {Fore.RED}Cache Misses{Style.RESET_ALL}: {cache_misses}  {Fore.YELLOW}Cache Flushes{Style.RESET_ALL}: {cache_flushes}   ")
     print(f"📊 {Fore.CYAN}Hit/Miss Ratio{Style.RESET_ALL}: {hit_miss_ratio:.2f}  {Fore.MAGENTA}Cache Size{Style.RESET_ALL}: {cache_size}    ")
+
+def print_explore_random(player, strategy="unkown"):
+    explore_count = explore_counter[player]
+    exploit_count = exploit_counter[player]
+    ratio = explore_count / exploit_count if exploit_count > 0 else float('inf')  # Handle division by zero
+
+    player_symbol = Fore.RED + 'X' if player == 1 else Fore.GREEN + 'O'
+    new_line_if_player_minus_one = "\n" if player == -1 else ""
+
+    print(f"{new_line_if_player_minus_one}\r\033[K🤖 Player {player_symbol}{Style.RESET_ALL}: Strategy {strategy} - Exploring moves [{explore_count}] | "
+        f"Exploiting moves [{exploit_count}] | "
+        f"Ratio (Explore/Exploit): {ratio:.2f}", end='')
