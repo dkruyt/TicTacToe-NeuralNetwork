@@ -66,24 +66,24 @@ parser.add_argument('--agent-o-strategy', type=str,
 
 args = parser.parse_args()
 
-# Print the argument values
-print("Configured settings for Tic-Tac-Toe game:")
-print("Show Visuals:      ", args.show_visuals)
-print("Show Text:         ", args.show_text)
-print("Delay:             ", args.delay)
-print("Human Player:      ", args.human_player)
-print("Alternate Moves:   ", args.alternate_moves)
-print("Number of Games:   ", args.games)
-print("Model Name:        ", args.model_name)
-print("Dense Units:       ", args.dense_units)
-print("Dropout Rate:      ", args.dropout_rate)
-print("Epsilon Start:     ", args.epsilon_start)
-print("Epsilon End:       ", args.epsilon_end)
-print("Epsilon Decay:     ", args.epsilon_decay)
-print("Model Type:        ", args.model_type)
-print("Reward Strategy:   ", args.reward)
-print("Agent X Strategy:  ", args.agent_x_strategy)
-print("Agent O Strategy:  ", args.agent_o_strategy)
+# Print the argument values with Unicode icons
+print("🛠 Configured settings for Tic-Tac-Toe game:")
+print("👁️ Show Visuals:      ", args.show_visuals)
+print("📜 Show Text:         ", args.show_text)
+print("⏲️ Delay:             ", args.delay)
+print("🎮 Human Player:      ", args.human_player)
+print("🔄 Alternate Moves:   ", args.alternate_moves)
+print("🎲 Number of Games:   ", args.games)
+print("💾 Model Name:        ", args.model_name)
+print("🧠 Dense Units:       ", args.dense_units)
+print("💦 Dropout Rate:      ", args.dropout_rate)
+print("📈 Epsilon Start:     ", args.epsilon_start)
+print("📉 Epsilon End:       ", args.epsilon_end)
+print("⏳ Epsilon Decay:     ", args.epsilon_decay)
+print("🤖 Model Type:        ", args.model_type)
+print("🏆 Reward Strategy:   ", args.reward)
+print("⚔️ Agent X Strategy:  ", args.agent_x_strategy)
+print("🛡️ Agent O Strategy:  ", args.agent_o_strategy)
 
 print()
 
@@ -256,6 +256,8 @@ def simulate_game_and_train(model, epsilon):
             print(f"Game {game_number}: Winner - {Fore.RED + 'X   ' if winner == 1 else Fore.GREEN + 'O   ' if winner == -1 else 'Draw'}" + Style.RESET_ALL)
             print()
             
+            #time.sleep(3)
+
             return current_game_history  # Return the history of this game
  
         player = switch_player(player)
@@ -382,7 +384,7 @@ for game_number in range(1, n_games + 1):
 
     except KeyboardInterrupt:
         clear_screen()
-        save_model = input("\nDetected KeyboardInterrupt. Do you want to save the model before exiting? (y/n): ")
+        save_model = input("\n🛑 Detected KeyboardInterrupt. Do you want to save the model before exiting? (y/n): ")
         if save_model.lower() == 'y':
             print("Saving model...")
             # Save your model here
@@ -412,15 +414,15 @@ try:
     model.save(args.model_name)  # Saves the model
 
     # Print success message
-    print(f"Model saved successfully as {args.model_name}")
+    print(f"✅ Model saved successfully as {args.model_name}")
 
 except IOError as e:
     # Handle I/O error such as directory not found or disk full
-    print(f"Failed to save the model due to an I/O error: {e}")
+    print(f"❌ Failed to save the model due to an I/O error: {e}")
 
 except Exception as e:
     # Handle other possible exceptions
-    print(f"An unexpected error occurred while saving the model: {e}")
+    print(f"❌ An unexpected error occurred while saving the model: {e}")
 
 #if args.show_visuals:
 print("We are done.")
