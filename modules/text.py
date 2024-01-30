@@ -66,7 +66,7 @@ def print_board(board):
     print()
 
 def print_output_layer(output_layer_activation, board):
-    move_cursor(0, 14)
+    move_cursor(0, 16)
     if output_layer_activation.size == 1:
         # Convert the numpy value to a Python scalar
         value = output_layer_activation.item()  # Extracts the scalar value from the array
@@ -172,3 +172,43 @@ def visualize_detailed_network_text(model, input_data, output_data):
     # Displaying the first few input and output data values as examples
     print("\nExample Input Data: ", input_data[0][:5])
     print("Example Output Data: ", output_data[0][:5])
+
+def print_tensorflow_info():
+    print(f"🔢 TensorFlow Version: {tf.__version__}")
+
+    # Print TensorFlow build details if available
+    build_info = tf.sysconfig.get_build_info()
+    print("🏗️ TensorFlow Build Information:")
+    for key, value in build_info.items():
+        print(f"  ➡️ {key}: {value}")
+
+    # List of physical devices
+    devices = tf.config.list_physical_devices()
+    if not devices:
+        print("⚠️ No physical devices found.")
+    else:
+        print("🔍 Found the following physical devices:")
+        for idx, device in enumerate(devices):
+            print(f"  🖥️ Device {idx + 1}:")
+            print(f"    📌 Type: {device.device_type}")
+            print(f"    🔖 Name: {device.name}")
+
+            if device.device_type == 'GPU':
+                details = tf.config.experimental.get_device_details(device)
+                print(f"    🚀 Compute Capability: {details.get('compute_capability', 'N/A')}")
+
+                # Additional GPU details
+                try:
+                    gpu_memory = tf.config.experimental.get_memory_info(device.name)
+                    print(f"    📊 Total Memory: {gpu_memory['total'] / (1024**3):.2f} GB")
+                    print(f"    📉 Current Memory Usage: {gpu_memory['current'] / (1024**3):.2f} GB")
+                except:
+                    print("    ℹ️ GPU memory details not available.")
+
+                print(f"    💾 Memory Limit: {device.memory_limit_bytes / (1024**3):.2f} GB")
+
+            elif device.device_type == 'CPU':
+                # Additional CPU details if needed
+                pass  # Placeholder for CPU-specific information
+
+            print()
