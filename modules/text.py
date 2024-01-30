@@ -1,10 +1,12 @@
 import os
 import platform
-from colorama import Fore, Back, Style
+from colorama import init, Fore, Style
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 import numpy as np
+
+init(autoreset=True)
 
 """
 This script includes a variety of utility functions for handling and visualizing a neural network model within a terminal, particularly for a Tic-Tac-Toe game. These functions enhance user interaction with the model and the game, providing insights into the AI's decision-making process and the game's dynamics.
@@ -46,13 +48,21 @@ def move_cursor(x, y):
 
 # Function to print the current state of the board
 def print_board(board):
-    print("\nBoard State:")
-    symbols = {1: Fore.RED + 'X', -1: Fore.GREEN + 'O', 0: Style.RESET_ALL +' '}
+    print("\n🎮 Board State:")
+    # Use Style.BRIGHT for bold 'X' and 'O'
+    symbols = {1: Style.BRIGHT + Fore.RED + 'X' + Style.RESET_ALL, 
+               -1: Style.BRIGHT + Fore.GREEN + 'O' + Style.RESET_ALL, 
+               0: Style.DIM + '{}'}
+    horizontal_line = '───┼───┼───'
+    vertical_line = Style.RESET_ALL + '│'
+
     for i in range(3):
-        print('\033[39m|'.join(symbols[board[i*3 + j]] for j in range(3)))
+        row = ' ' + ' {} '.format(vertical_line).join(
+            symbols[board[i*3 + j]].format(i*3 + j) if board[i*3 + j] == 0 else symbols[board[i*3 + j]] 
+            for j in range(3))
+        print(row)
         if i < 2:
-            print(Style.RESET_ALL + '-----')
-    print(Style.RESET_ALL)
+            print(horizontal_line)
     print()
 
 def print_output_layer(output_layer_activation, board):
@@ -60,12 +70,12 @@ def print_output_layer(output_layer_activation, board):
     if output_layer_activation.size == 1:
         # Convert the numpy value to a Python scalar
         value = output_layer_activation.item()  # Extracts the scalar value from the array
-        print(f"Value Prediction: {Fore.BLUE}{value:.2f}{Style.RESET_ALL}")
+        print(f"🔮 Value Prediction: {Fore.BLUE}{value:.2f}{Style.RESET_ALL}")
     else:
         # For Policy-based model (3x3 output)
         output_grid = output_layer_activation.reshape((3, 3))
 
-        print("Neural Network Output Layer Activation:")
+        print("🧠 Neural Network Output Layer Activation:")
         for i in range(3):
             for j in range(3):
                 value = output_grid[i, j]
@@ -90,29 +100,26 @@ def plot_epsilon_value_text(epsilon_value, game_number, total_games):
     progress_bar = '[' + '=' * filled_positions + ' ' * (progress_bar_width - filled_positions) + ']'
 
     # Print the progress bar with the current game number, total games, and epsilon value
-    print(f"Game {game_number} of {total_games} {progress_bar} Epsilon: {epsilon_value:.4f}")
+    print(f"🎲 Game {game_number} of {total_games} {progress_bar} Epsilon (ε): {epsilon_value:.4f}")
 
 def print_model_weights_and_biases(model):
-    print(f"\033[28;0H", end='')
+    print("\033[28;0H", end='')
+
     for i, layer in enumerate(model.layers):
         weights_biases = layer.get_weights()
         if len(weights_biases) > 0:
+            print(f"{Fore.MAGENTA}Layer {i + 1} - {layer.name}:{Style.RESET_ALL}")
             if type(layer) != layers.SimpleRNN:
                 weights, biases = weights_biases
-
-                print(f"Layer {i+1}: {layer.name}")
-                print(f"  Weights: Mean = {weights.mean():.4f}, Std = {weights.std():.4f}, Min = {weights.min():.4f}, Max = {weights.max():.4f}")
-                print(f"  Biases: Mean = {biases.mean():.4f}, Std = {biases.std():.4f}, Min = {biases.min():.4f}, Max = {biases.max():.4f}")
-
-            elif type(layer) == layers.SimpleRNN:
-                weights = weights_biases[0]
-                recurrent_weights = weights_biases[1]
-                biases = weights_biases[2]
-
-                print(f"SimpleRNN Layer {i+1}: {layer.name}")
-                print(f"  Input Weights: Mean = {weights.mean():.4f}, Std = {weights.std():.4f}, Min = {weights.min():.4f}, Max = {weights.max():.4f}")
-                print(f"  Recurrent Weights: Mean = {recurrent_weights.mean():.4f}, Std = {recurrent_weights.std():.4f}, Min = {recurrent_weights.min():.4f}, Max = {recurrent_weights.max():.4f}")
-                print(f"  Biases: Mean = {biases.mean():.4f}, Std = {biases.std():.4f}, Min = {biases.min():.4f}, Max = {biases.max():.4f}")
+                print(f"{Fore.GREEN}  ⚖️ Weights{Style.RESET_ALL} - Mean: {weights.mean():.4f}  Std: {weights.std():.4f}  Min: {weights.min():.4f}  Max: {weights.max():.4f}")
+                print(f"{Fore.CYAN}  ⚙️ Biases{Style.RESET_ALL}  - Mean: {biases.mean():.4f}  Std: {biases.std():.4f}  Min: {biases.min():.4f}  Max: {biases.max():.4f}")
+            else:
+                weights, recurrent_weights, biases = weights_biases
+                print(f"{Fore.GREEN}  ⚖️ Input Weights{Style.RESET_ALL}     - Mean: {weights.mean():.4f}  Std: {weights.std():.4f}  Min: {weights.min():.4f}  Max: {weights.max():.4f}")
+                print(f"{Fore.YELLOW}  ⚖️ Recurrent Weights{Style.RESET_ALL} - Mean: {recurrent_weights.mean():.4f}  Std: {recurrent_weights.std():.4f}  Min: {recurrent_weights.min():.4f}  Max: {recurrent_weights.max():.4f}")
+                print(f"{Fore.CYAN}  ⚙️ Biases{Style.RESET_ALL}            - Mean: {biases.mean():.4f}  Std: {biases.std():.4f}  Min: {biases.min():.4f}  Max: {biases.max():.4f}")
+        else:
+            print(f"{Fore.RED}Layer {i + 1} - {layer.name} (No weights/biases){Style.RESET_ALL}")
 
 def visualize_detailed_network_text(model, input_data, output_data):
     # Initialize layer_sizes with the size of the input data
