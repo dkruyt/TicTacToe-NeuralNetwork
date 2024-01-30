@@ -88,7 +88,7 @@ def assign_rewards_block(game_history, winner):
     reward_for_win = 1.0
     reward_for_loss = -1.0
     reward_for_draw = 0.5
-    reward_for_block = 0.5  # Reward for blocking opponent's win
+    reward_for_block = 0.2  # Reward for blocking opponent's win
 
     # Determine the base reward based on game outcome
     if winner == 1:
