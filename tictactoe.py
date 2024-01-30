@@ -1,6 +1,7 @@
 import time
 import argparse
 import sys
+import os
 
 """
 This script facilitates running a Tic-Tac-Toe game with various customizable options, particularly for AI training and visualization. It includes argument parsing for configuring game settings and AI strategies, and integrates functions for game logic, AI model interactions, and visual outputs. Key features include the ability to toggle visuals, set AI strategies, choose model types, and define reward strategies.
@@ -54,6 +55,8 @@ parser.add_argument('--epsilon-decay', type=float, default=0.99,
 parser.add_argument('--model-type', type=str, 
                     choices=['MLP', 'Policy', 'Value', 'CNN', 'RNN', 'Simple'], default='MLP', 
                     help='Selects the AI model type, with options including MLP, CNN, RNN, and others, each offering different learning capabilities.')
+parser.add_argument('--use-cache', action='store_true', default=False,
+                    help='Enables caching of model predictions to speed up the simulation.')
 parser.add_argument('--reward', type=str,
                     choices=['block', 'progress', 'penalty', 'simple', 'future', 'combined', 'win_moves', 'winning_sequence', 'opponent_penalty'], default='progress', 
                     help='Chooses the reward strategy for training the AI, affecting how the model learns from game outcomes.')
@@ -81,6 +84,7 @@ print("📈 Epsilon Start:     ", args.epsilon_start)
 print("📉 Epsilon End:       ", args.epsilon_end)
 print("⏳ Epsilon Decay:     ", args.epsilon_decay)
 print("🤖 Model Type:        ", args.model_type)
+print("💾 Use Cache:         ", args.use_cache)
 print("🏆 Reward Strategy:   ", args.reward)
 print("⚔️ Agent X Strategy:  ", args.agent_x_strategy)
 print("🛡️ Agent O Strategy:  ", args.agent_o_strategy)
@@ -89,6 +93,8 @@ print()
 
 ## Local stuff, load after arg, so help is display faster.
 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'  # Suppresses informational messages
+
 from modules.model import *
 from modules.visualizations import *
 from modules.game_logic import *
@@ -96,22 +102,6 @@ from modules.rewards import *
 from modules.text import *
 
 show_text = args.show_text
-
-def print_tensorflow_info():
-    print(f"TensorFlow Version: {tf.__version__}")
-    devices = tf.config.list_physical_devices()
-    if not devices:
-        print("No physical devices found.")
-    else:
-        print("Found the following physical devices:")
-        for idx, device in enumerate(devices):
-            print(f"  Device {idx + 1}:")
-            print(f"    Type: {device.device_type}")
-            print(f"    Name: {device.name}")
-            if device.device_type == 'GPU':
-                details = tf.config.experimental.get_device_details(device)
-                print(f"    Compute Capability: {details.get('compute_capability', 'N/A')}")
-                print(f"    Memory: {device.memory_limit_bytes / (1024**3):.2f} GB")
 
 print_tensorflow_info()
 
@@ -172,7 +162,7 @@ def simulate_game_and_train(model, epsilon):
 
         if args.show_text or args.show_visuals:
             #predictions = model.predict(board_state, verbose=0)
-            predictions = predict_with_cache(model, board_state, player, show_text)
+            predictions = predict_with_cache(model, board_state, player, show_text, args.use_cache)
 
         if args.show_text:
             #visualize_detailed_network_text(model, board_state , predictions)
@@ -192,19 +182,19 @@ def simulate_game_and_train(model, epsilon):
         else:
             # For 'Value' model type, use epsilon_greedy_move_value strategy
             if args.model_type == 'Value':  
-                move = epsilon_greedy_move_value(model, board, player, epsilon, show_text, board_state)
+                move = epsilon_greedy_move_value(model, board, player, epsilon, show_text, board_state, args.use_cache)
             else:
                 # For other model types, use specified strategy for each agent
                 current_strategy = args.agent_x_strategy if player == 1 else args.agent_o_strategy
 
                 if current_strategy == 'epsilon_greedy':
-                    move = epsilon_greedy_move_default(model, board, player, epsilon, show_text, board_state)
+                    move = epsilon_greedy_move_default(model, board, player, epsilon, show_text, board_state, args.use_cache)
                 elif current_strategy == 'random':
-                    move = random_move_selection(board, show_text)
+                    move = random_move_selection(board, show_text, player)
                 elif current_strategy == 'softmax':
-                    move = softmax_exploration(model, board, show_text, player, board_state)
+                    move = softmax_exploration(model, board, show_text, player, board_state, args.use_cache)
                 elif current_strategy == 'ucb':
-                    move = ucb_move_selection(model, board, show_text, player, board_state, c_param=0.1)
+                    move = ucb_move_selection(model, board, show_text, player, board_state, args.use_cache, c_param=0.1)
                 elif current_strategy == 'minimax':
                     move = minimax_move(board, player, show_text)
                 elif current_strategy == 'epsilon_minimax':
@@ -253,8 +243,9 @@ def simulate_game_and_train(model, epsilon):
                 visualize_output_layer(predictions, board)
 
             # Print winner
+            move_cursor(0, 14)
             print(f"Game {game_number}: Winner - {Fore.RED + 'X   ' if winner == 1 else Fore.GREEN + 'O   ' if winner == -1 else 'Draw'}" + Style.RESET_ALL)
-            print()
+            #print()
             
             #time.sleep(3)
 
