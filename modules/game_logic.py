@@ -83,11 +83,11 @@ def get_human_move(board):
     move = None
     while move not in valid_moves:
         try:
-            move = int(input("Enter your move (0-8): "))
+            move = int(input("🔢 Enter your move (0-8): "))
             if move not in valid_moves:
-                print("Invalid move. Please try again.")
+                print("❌ Invalid move. Please try again. Choose from available slots: ", valid_moves)
         except ValueError:
-            print("Invalid input. Please enter a number.")
+            print("🚫 Invalid input. Please enter a number.")
     return move
 
 # Function to switch players between moves
@@ -100,7 +100,7 @@ def epsilon_greedy_move_default(model, board, player, epsilon, show_text, board_
         # Exploration: Choose a random move
         valid_moves = [i for i in range(9) if board[i] == 0]
         if show_text:
-            print("\r\033[KAI is exploring: Chose a random move.", end='')
+            print("\r\033[K🤖 AI is exploring: Chose a random move.", end='')
         return random.choice(valid_moves)
     else:
         # Exploitation: Choose the best move based on model prediction
@@ -110,7 +110,7 @@ def epsilon_greedy_move_default(model, board, player, epsilon, show_text, board_
             if board[i] != 0:
                 predictions[i] = -1e7
         if show_text:
-            print("\r\033[KAI is exploiting: Chose the best predicted move for.", end='')
+            print("\r\033[K 🤖 AI is exploiting: Chose the best predicted move for.", end='')
         return np.argmax(predictions)
 
 def epsilon_greedy_move_value(model, board, player, epsilon, show_text, board_state):
@@ -118,7 +118,7 @@ def epsilon_greedy_move_value(model, board, player, epsilon, show_text, board_st
         # Exploration: Choose a random move
         valid_moves = [i for i in range(9) if board[i] == 0]
         if show_text:
-            print("\r\033[KAI is exploring: Chose a random move.", end='')
+            print("\r\033[K🤖 AI is exploring: Chose a random move.", end='')
         return random.choice(valid_moves)
     else:
         # Exploitation: Choose the best move based on model prediction
@@ -135,7 +135,7 @@ def epsilon_greedy_move_value(model, board, player, epsilon, show_text, board_st
                     best_value = predicted_value
                     best_move = i
         if show_text:
-            print("\r\033[KAI is exploiting: Chose the best predicted move.", end='')
+            print("\r\033[K 🤖 AI is exploiting: Chose the best predicted move for.", end='')
         return best_move if best_move is not None else random.choice([i for i in range(9) if board[i] == 0])
 
 
@@ -154,13 +154,13 @@ def check_potential_win(board, player, show_text):
 def random_move_selection(board, show_text):
     valid_moves = [i for i in range(9) if board[i] == 0]
     if show_text:
-        print("AI is choosing a random move.")
+        print("🤖 AI is choosing a random move.")
     return random.choice(valid_moves)
 
 # Function to select next move using softmax exploration
 def softmax_exploration(model, board, show_text, player, board_state):
     if show_text:
-        print("AI is selecting a move using softmax exploration.")
+        print("🤖 AI is selecting a move using softmax exploration.")
     # Getting Q values from the model for current state
     #Q_values = model.predict(np.array([board]), verbose=0)[0]
     Q_values = predict_with_cache(model, board_state, player, show_text)[0]
@@ -187,7 +187,7 @@ action_counts = [0]*9
 def ucb_move_selection(model, board, show_text, player, board_state, c_param=0.1):
     global action_counts
     if show_text:
-        print("AI is selecting a move using Upper Confidence Bound strategy.")
+        print("🤖 AI is selecting a move using Upper Confidence Bound strategy.")
   
     # Get Q values for the board state from the model
     #Q_values = model.predict(np.array([board]), verbose=0)[0]
@@ -308,6 +308,7 @@ prediction_cache = {}
 # Global variables for cache hit and miss counters
 cache_hits = 0
 cache_misses = 0
+cache_flushes = 0
 
 def ndarray_hash(array):
     """Create a hash for a numpy array."""
@@ -315,8 +316,9 @@ def ndarray_hash(array):
 
 # Function to flush the cache
 def flush_cache():
-    global prediction_cache
+    global prediction_cache, cache_flushes
     prediction_cache.clear()
+    cache_flushes += 1
     #print(f"\033[20;0H", end='')
     #print("Cache has been flushed.")
 
@@ -328,11 +330,10 @@ def predict_with_cache(model, input_data, player, show_text, use_cache=True):
 
     # Check if the result is in cache and if caching is enabled
     if use_cache and input_hash in prediction_cache:
+        cache_hits += 1
         if show_text:
             print_cache_stats()
-            #print("Prediction " + (Fore.GREEN + 'O' if player == -1 else Fore.RED + 'X') + Style.RESET_ALL + ": from cache")
 
-        cache_hits += 1
         return prediction_cache[input_hash]
 
     # Compute and store the result if not in cache
@@ -343,16 +344,13 @@ def predict_with_cache(model, input_data, player, show_text, use_cache=True):
 
     if show_text:
         print_cache_stats()
-        #print("Prediction " + (Fore.GREEN + 'O' if player == -1 else Fore.RED + 'X') + Style.RESET_ALL + ": neural net")
     return result
 
 def print_cache_stats():
-    global cache_hits, cache_misses
+    global cache_hits, cache_misses, cache_flushes
     total_accesses = cache_hits + cache_misses
     hit_miss_ratio = cache_hits / total_accesses if total_accesses > 0 else 0
     cache_size = len(prediction_cache)
     print(f"\033[22;0H", end='')
-    print(f"Cache Hits: {cache_hits}")
-    print(f"Cache Misses: {cache_misses}")
-    print(f"Hit/Miss Ratio: {hit_miss_ratio:.2f}")  # formatted to two decimal place
-    print(f"Number of Items in Cache: {cache_size}")
+    print(f"💾 {Fore.GREEN}Cache Hits{Style.RESET_ALL}: {cache_hits}  {Fore.RED}Cache Misses{Style.RESET_ALL}: {cache_misses}  {Fore.YELLOW}Cache Flushes{Style.RESET_ALL}: {cache_flushes}   ")
+    print(f"📊 {Fore.CYAN}Hit/Miss Ratio{Style.RESET_ALL}: {hit_miss_ratio:.2f}  {Fore.MAGENTA}Cache Size{Style.RESET_ALL}: {cache_size}    ")
