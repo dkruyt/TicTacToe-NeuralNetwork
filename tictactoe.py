@@ -180,9 +180,17 @@ def simulate_game_and_train(model, epsilon):
         if (args.human_player == 'X' and player == 1) or (args.human_player == 'O' and player == -1):
             move = get_human_move(board)
         else:
-            # For 'Value' model type, use epsilon_greedy_move_value strategy
-            if args.model_type == 'Value':  
-                move = epsilon_greedy_move_value(model, board, player, epsilon, show_text, board_state, args.use_cache)
+            # For 'Value' model type, select strategy support
+            if args.model_type == 'Value':
+                current_strategy = args.agent_x_strategy if player == 1 else args.agent_o_strategy
+                if current_strategy == 'random':
+                    move = random_move_selection(board, show_text, player)
+                elif current_strategy == 'minimax':
+                    move = minimax_move(board, player, show_text)
+                elif current_strategy == 'epsilon_minimax':
+                    move = minimax_with_epsilon(board, player, epsilon, show_text)
+                else:
+                    move = epsilon_greedy_move_value(model, board, player, epsilon, show_text, board_state, args.use_cache)
             else:
                 # For other model types, use specified strategy for each agent
                 current_strategy = args.agent_x_strategy if player == 1 else args.agent_o_strategy
