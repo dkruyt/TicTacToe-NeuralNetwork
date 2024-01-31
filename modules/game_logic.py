@@ -376,6 +376,7 @@ def print_explore_random(player, strategy="unkown"):
     player_symbol = Fore.RED + 'X' if player == 1 else Fore.GREEN + 'O'
     new_line_if_player_minus_one = "\n" if player == -1 else ""
 
+    print(f"\033[21;0H", end='')
     print(f"{new_line_if_player_minus_one}\r\033[K🤖 Player {player_symbol}{Style.RESET_ALL}: Strategy {strategy} - Exploring moves [{explore_count}] | "
         f"Exploiting moves [{exploit_count}] | "
         f"Ratio (Explore/Exploit): {ratio:.2f}", end='')
