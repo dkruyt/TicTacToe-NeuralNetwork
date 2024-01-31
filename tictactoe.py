@@ -66,7 +66,8 @@ parser.add_argument('--agent-x-strategy', type=str,
 parser.add_argument('--agent-o-strategy', type=str,
                     choices=['epsilon_greedy', 'random', 'softmax', 'ucb', 'minimax', 'epsilon_minimax'], default='epsilon_greedy', 
                     help='Sets the strategy for Agent O, similarly impacting its gameplay tactics.')
-
+parser.add_argument('--debug', action='store_true', default=False,
+                    help='Debug stuff.')
 args = parser.parse_args()
 
 # Print the argument values with Unicode icons
@@ -111,6 +112,9 @@ def update_model(model, batch_game_history):
     y_train = []
 
     for game_history in batch_game_history:
+
+        total_reward = 0
+
         if args.reward == 'progress':
             assign_rewards_progress(game_history, check_winner(game_history[-1][0]))  # Assign rewards based on game outcome
         elif args.reward == 'block':
@@ -130,10 +134,24 @@ def update_model(model, batch_game_history):
         elif args.reward == 'opponent_penalty':
             assign_rewards_and_opponent_penalty(game_history, check_winner(game_history[-1][0]))  # Assign rewards based on game outcome
 
-
         for board_state, target in game_history:
             X_train.append(board_state)
             y_train.append(target)
+
+            if args.debug:
+                # Find the index of the move made in the board_state
+                move_index = board_state.index(1) if 1 in board_state else board_state.index(-1)
+                # Get the reward for the move
+                move_reward = target[move_index]
+            
+                # Accumulate the reward
+                total_reward += move_reward
+
+                # Print the move and its reward
+                print(f"Move at index {move_index}: Reward = {move_reward}")
+    if args.debug:
+        # Print the total reward for the game
+        print(f"Total reward for this game: {total_reward}\n")
 
     model.fit(np.array(X_train), np.array(y_train), epochs=10, verbose=0, batch_size=32, callbacks=[tensorboard_callback])
 
@@ -251,7 +269,8 @@ def simulate_game_and_train(model, epsilon):
                 visualize_output_layer(predictions, board)
 
             # Print winner
-            move_cursor(0, 14)
+            if args.show_text:
+                move_cursor(0, 14)
             print(f"Game {game_number}: Winner - {Fore.RED + 'X   ' if winner == 1 else Fore.GREEN + 'O   ' if winner == -1 else 'Draw'}" + Style.RESET_ALL)
             #print()
             
@@ -297,7 +316,6 @@ if args.show_visuals:
 
 # Train the model over multiple games
 starting_player = 1  # Start with 'X' in the first game
-#n_games = 1000
 n_games = args.games
 
 # Initialize counters
@@ -347,7 +365,8 @@ for game_number in range(1, n_games + 1):
         # Check if it's time to update the model
         if game_number % batch_size == 0 or game_number == n_games:
             model_update_count += 1  # Increment the counter
-            print(f"\033[3;0H", end='')
+            if args.show_text:
+                print(f"\033[3;0H", end='')
             print(f"Updating model... (Update count: {model_update_count})")
             update_model(model, batch_game_history)
             flush_cache()
