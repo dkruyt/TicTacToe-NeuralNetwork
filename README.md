@@ -1,21 +1,20 @@
 # README.md for Tic-Tac-Toe Neural Network Training Script
 
 ## Overview
-This script is designed by Dennis Kruyt just for fun, wanted to learn a little about training a neural network by playing Tic-Tac-Toe. It utilizes TensorFlow to create and train a neural network, which can be either a Multi-Layer Perceptron (MLP), Convolutional Neural Network (CNN), or Recurrent Neural Network (RNN). The game includes various visualization features for the neural network's layers, activations, and game statistics, as well as command-line arguments to customize the game and training settings.
+This script is designed by Dennis Kruyt (With the help of a other AI) just for fun, wanted to learn a little about training a neural network by playing Tic-Tac-Toe. It utilizes TensorFlow to create and train a neural network. The game includes various visualization features for the neural network's layers, activations, and game statistics, as well as command-line arguments to customize the game and training settings.
 
-## Neural Network Model
-The neural network is a sequential model with dense layers and dropout for regularization. It predicts the next move based on the game board's state.
+## Features
+
+- **Visualizations**: Enable game visuals and text for an interactive experience.
+- **Customizable AI Strategies**: Choose from various AI strategies for both X and O agents.
+- **Human vs AI or AI vs AI Gameplay**: Play as a human or watch AI vs AI games.
+- **Model Training and Adjustment**: Train AI models with different strategies, rewards, and configurations.
+- **Neural Network Models**: Choose between MLP, CNN, and RNN models.
+- **Game Visualization**: Visualize the neural network's input, output, weights, biases, and detailed network structure during gameplay.
+- **TensorFlow Integration**: Leverage TensorFlow for model training and prediction.
 
 ## Saving and Loading the Model
 The model is automatically saved after training and can be loaded when the script is run again, allowing for continuous learning.
-
-## Features
-- **Neural Network Models**: Choose between MLP, CNN, and RNN models.
-- **Game Visualization**: Visualize the neural network's input, output, weights, biases, and detailed network structure during gameplay.
-- **Game Statistics**: Display statistics like wins, losses, and draws in a pie chart.
-- **Epsilon-Greedy Strategy**: Implement an epsilon-greedy strategy for move selection, with visual representation of epsilon value over time.
-- **Command-line Arguments**: Customize various aspects of the game and training process.
-- **Human vs AI Gameplay**: Play as a human against the AI.
 
 ## Requirements
 - Python 3.x
@@ -40,60 +39,185 @@ python tic_tac_toe.py --games 1000 --model-type MLP --model-name mlp-model.keras
 ```
 
 ### Available Arguments
-- `--show-visuals`: Enable visualizations during the game.
-- `--show-text`: Enable text output for game status.
-- `--delay`: Add a delay after each move.
-- `--human-player`: Specify whether to play as 'X', 'O', or let AI play against itself.
-- `--games`: Set the number of games to play.
-- `--model-name`: Specify the filename for saving/loading the model.
-- `--dense-units`: Set the number of neurons in Dense layers.
-- `--dropout-rate`: Set the dropout rate.
-- `--epsilon-start`, `--epsilon-end`, `--epsilon-decay`: Configure the epsilon-greedy strategy.
-- `--model-type`: Choose the type of neural network model (MLP, CNN, RNN).
+The arguments for this Python script provide extensive customization for running a Tic-Tac-Toe game with an AI. Here are detailed explanations for each argument:
 
-## Detailed Explanation of Arguments
+`--show-visuals`: Enables visual representation of the Tic-Tac-Toe board and game progress. When set, the game will display visual updates after each move, making it easier to follow the game. This option is particularly useful for understanding how the AI makes decisions.
 
-### `--show-visuals`
-- **Description**: Enable game visuals during gameplay.
-- **Impact**: Enhances the interactive experience by displaying visualizations of the neural network and game statistics. Requires an appropriate display environment like Jupyter Notebook.
+`--show-text`: When enabled, the game outputs text-based information about the current state of the game, such as the board layout and recent moves. This is useful for those who prefer a more descriptive view of the game or for debugging purposes.
 
-### `--show-text`
-- **Description**: Enable text output for game status and progress.
-- **Impact**: Useful for understanding the game's flow, especially when not using visualizations. Provides information about player turns, board state, and game outcomes.
+`--delay`: Introduces a delay between moves. This is particularly useful when observing AI vs AI games, as it slows down the game to a human-readable pace. It allows users to better follow the game's progress and understand the AI's decision-making process.
 
-### `--delay`
-- **Description**: Add a delay after each move in the game.
-- **Impact**: Slows down the gameplay, allowing users to observe changes and decisions made by the AI after each move.
+`--human-player`: Specifies whether a human will play and, if so, whether as 'X' or 'O'. Setting this to 'None' results in an AI vs AI game. This flexibility allows users to either participate in the game or observe an AI-only match.
 
-### `--human-player`
-- **Description**: Specify whether a human will play (as 'X' or 'O') or set to 'None' for AI vs AI games.
-- **Impact**: Allows users to either engage directly with the AI or observe an AI vs. AI match, making the game interactive and versatile.
+`--alternate-moves`: When set, this option alternates the starting player between X and O in consecutive games. This is useful for ensuring fairness and variability in AI vs AI games, as it prevents one side from always having the advantage of the first move.
 
-### `--games`
-- **Description**: Set the number of games to be played in the simulation.
-- **Impact**: Controls the length of the simulation, allowing for either extensive training sessions or quick demonstrations.
+`--games`: Determines the number of games to play. This is particularly relevant when training the AI, as it dictates the amount of gameplay data the AI will learn from.
 
-### `--model-name`
-- **Description**: Specify the filename for saving/loading the neural network model.
-- **Impact**: Enables persistence of the model's state across sessions, crucial for ongoing training and refinement of the AI.
+`--batch-size`: Specifies the number of games to be played before updating the AI model's training. If not set, it defaults to a tenth of the number of games specified. This allows for periodic training of the AI model, balancing between learning from enough data and updating the model frequently.
 
-### `--dense-units`
-- **Description**: Determine the number of neurons in each Dense layer of the neural network.
-- **Impact**: Influences the learning capacity of the model. More neurons can increase complexity and computational requirements.
+`--model-name`: Sets the filename for saving or loading the AI model. This allows for persistence of the AI's learning, enabling the user to continue training an existing model or start with a pre-trained model.
 
-### `--dropout-rate`
-- **Description**: Set the dropout rate for regularization to prevent overfitting.
-- **Impact**: Helps in generalizing the model. A high dropout rate might hinder the model's ability to learn, while a low rate might lead to overfitting.
+`--dense-units`: Specifies the number of neurons in each dense layer of the neural network model. This parameter can greatly affect the AI's learning capability and performance.
 
-### `--epsilon-start`, `--epsilon-end`, `--epsilon-decay`
-- **Description**: Control the epsilon-greedy strategy for balancing exploration and exploitation.
-- **Impact**: Critical for effective learning. The start value sets initial exploration, end value is the lowest boundary, and decay controls the reduction rate after each game.
+`--dropout-rate`: Sets the dropout rate for the dropout layers in the neural network. Dropout is a regularization technique to prevent overfitting by randomly setting a fraction of input units to 0 at each update during training time.
 
-### `--model-type`
-- **Description**: Choose the type of neural network model: MLP (Multi-Layer Perceptron), CNN (Convolutional Neural Network), or RNN (Recurrent Neural Network).
-- **Impact**: Each model type has different strengths and is suitable for various learning and pattern recognition tasks in the game.
+`--epsilon-start`, `--epsilon-end`, `--epsilon-decay`: These parameters control the epsilon-greedy strategy, which is used for balancing exploration and exploitation by the AI. `epsilon-start` is the initial value, `epsilon-end` is the minimum value, and `epsilon-decay` is the rate at which epsilon decreases after each game.
 
-Each argument significantly influences the game simulation and AI training, affecting performance, learning effectiveness, and user experience.
+`--model-type`: Chooses the type of AI model from a set of options like MLP (Multilayer Perceptron), CNN (Convolutional Neural Network), RNN (Recurrent Neural Network), etc. This choice significantly impacts how the AI processes game information and learns.
+
+`--reward`: Selects the reward strategy for the AI agent. Different strategies (e.g., 'block', 'progress', 'penalty') dictate how the AI evaluates and learns from various game outcomes.
+
+`--agent-x-strategy`, `--agent-o-strategy`: These arguments define the strategies for Agents X and O, respectively. Options like 'epsilon_greedy', 'random', 'softmax', etc., determine how each agent decides its moves, influencing the overall gameplay dynamics.
+
+These arguments provide a wide range of configurations to tailor the gameplay experience and AI behavior, offering both an engaging game for players and a rich environment for AI training and research.
+
+##  Neural network models
+The provided code defines several neural network models using TensorFlow and Keras, each tailored for different aspects of learning and decision-making in a Tic-Tac-Toe game. Here's a detailed explanation of each model:
+
+### 1. Multi-Layer Perceptron (MLP) Model
+
+#### create_mlp_model(input_shape, dense_units, dropout_rate)
+- **Purpose**: A general-purpose neural network model for predicting the best moves in Tic-Tac-Toe.
+- **Architecture**:
+  - **Input Layer**: Dense layer with `dense_units` neurons, using ReLU activation. It receives the game state as input.
+  - **Hidden Layers**: Two dense layers with `dense_units` neurons each, separated by dropout layers. The dropout layers help prevent overfitting by randomly setting a fraction of the input units to 0 during training.
+  - **Output Layer**: A dense layer with 9 neurons (one for each cell of the Tic-Tac-Toe board), using linear activation to predict the value for each possible move.
+- **Compilation**: Uses the Adam optimizer and mean squared error loss function, suitable for regression problems.
+
+### 2. Policy MLP Model
+
+#### create_policy_mlp_model(input_shape, dense_units, dropout_rate)
+- **Purpose**: Designed for classification tasks, predicting the probability of each move being the best choice.
+- **Architecture**: Similar to `create_mlp_model`, but the output layer uses softmax activation for multi-class classification, making it suitable for selecting moves based on their probability.
+- **Compilation**: Uses categorical cross-entropy as the loss function and includes an accuracy metric, which is common for classification problems.
+
+### 3. Value MLP Model
+
+#### create_value_mlp_model(input_shape, dense_units, dropout_rate)
+- **Purpose**: A value-based approach where the model predicts a single value representing the desirability of the current board state.
+- **Architecture**: Similar to `create_mlp_model`, but with only one neuron in the output layer using tanh activation. This is typical for value-based reinforcement learning where the output represents an estimation of the state's value.
+- **Compilation**: Compiled with mean squared error loss, as it's essentially a regression problem.
+
+### 4. Convolutional Neural Network (CNN) Model
+
+#### create_cnn_model(input_shape, dense_units, dropout_rate)
+- **Purpose**: Leverages the spatial structure of the Tic-Tac-Toe board using convolutional layers.
+- **Architecture**:
+  - **Input Layer**: Reshapes the input to a 3x3 grid.
+  - **Convolutional Layer**: A 2D convolutional layer that processes the grid.
+  - **Flatten Layer**: Flattens the output from the convolutional layer.
+  - **Hidden Layer**: A dense layer with ReLU activation.
+  - **Output Layer**: Similar to the MLP model, outputs linear activations for each possible move.
+- **Compilation**: Compiled like the MLP model, focusing on regression.
+
+### 5. Recurrent Neural Network (RNN) Model
+
+#### create_rnn_model(input_shape, dense_units, dropout_rate)
+- **Purpose**: Uses RNN to capture the sequential nature of the game moves.
+- **Architecture**:
+  - **Input Layer**: Reshapes the input into a sequence (one element for each cell on the board).
+  - **RNN Layer**: A SimpleRNN layer to process the sequence data.
+  - **Hidden and Output Layers**: Similar to the MLP and CNN models.
+- **Compilation**: Compiled for a regression problem, similar to the MLP and CNN models.
+
+### 6. Simple MLP Model
+
+#### create_simple_mlp_model(input_shape, dense_units)
+- **Purpose**: A more straightforward version of the MLP model, with fewer layers.
+- **Architecture**: Consists of an input layer with `dense_units` neurons and an output layer with 9 neurons. It omits dropout layers and additional hidden layers.
+- **Compilation**: Uses mean squared error loss and the Adam optimizer, suitable for a basic regression problem.
+
+## The reward system 
+The reward system in this Tic-Tac-Toe AI script is designed for training a reinforcement learning (RL) agent using different strategies. Each strategy assigns rewards or penalties to moves based on various criteria, aiming to teach the AI optimal play. Here's an overview of each strategy:
+
+### 1. assign_rewards_simple(game_history, winner)
+- **Objective**: Basic reward system that prioritizes winning.
+- **Mechanism**: Assigns a positive reward for a win, a negative reward for a loss, and a neutral reward for a draw. Rewards are discounted (reduced) for each step moving backward from the end of the game, emphasizing the importance of recent moves leading to the outcome.
+
+### 2. assign_reward_penalty(game_history, winner)
+- **Objective**: Encourages quicker wins by penalizing longer games.
+- **Mechanism**: Similar to `assign_rewards_simple`, but introduces a penalty for each move made. This encourages the AI to win in fewer moves.
+
+### 3. assign_rewards_block(game_history, winner)
+- **Objective**: Rewards moves that block the opponent from winning.
+- **Mechanism**: Adds a reward for moves that prevent the opponent from winning on their next turn. It combines this with the base reward system from `assign_rewards_simple`.
+
+### 4. assign_rewards_progress(game_history, winner)
+- **Objective**: Incentivizes moves that progressively lead to a win.
+- **Mechanism**: Rewards each move leading to a win, providing incremental rewards on top of the base reward, thus teaching the AI to build a winning strategy progressively.
+
+### 5. assign_rewards_future(game_history, winner)
+- **Objective**: Encourages foresight by rewarding moves that could lead to a future win.
+- **Mechanism**: Assigns additional rewards to moves that create potential future winning opportunities. This strategy aims to teach the AI to plan ahead.
+
+### 6. assign_rewards_combined(game_history, winner)
+- **Objective**: Combines various strategies for a comprehensive reward system.
+- **Mechanism**: Merges the elements of blocking, progress, predictive rewards, and penalties for each move. It's a complex strategy that balances various aspects of the game.
+
+### 7. assign_rewards_only_for_win(game_history, winner)
+- **Objective**: Simplifies the reward system by only rewarding winning moves.
+- **Mechanism**: Assigns a reward only for the final winning move, with no rewards or penalties for any other moves.
+
+### 8. assign_rewards_for_winning_sequence(game_history, winner)
+- **Objective**: Rewards all moves that are part of the winning sequence.
+- **Mechanism**: Identifies and rewards all the moves that directly contributed to the win, emphasizing the importance of each move in the winning strategy.
+
+### 9. assign_rewards_and_opponent_penalty(game_history, winner)
+- **Objective**: Adds a penalty for the opponent's moves that fail to block a winning move.
+- **Mechanism**: Alongside rewarding the winning sequence, this strategy penalizes the opponent's last move if it did not prevent the win, thus teaching the AI to capitalize on the opponent's mistakes.
+
+### Utility Functions
+- **check_potential_win(board, player)**: Checks if a player can win in their next move, used in blocking strategies.
+- **check_future_win(board_state, move)**: Assesses if a move can lead to a potential win in future turns, supporting predictive strategies.
+- **find_winning_sequence_moves(game_history)**: Identifies moves that contributed to a win, used in rewarding winning sequences.
+
+Each of these reward strategies serves a different purpose in training the AI. Some focus on short-term tactics (like blocking and quick wins), while others encourage long-term strategic thinking. The choice of reward strategy can significantly impact how the AI learns and plays the game.
+
+## Core Game Functions
+
+The game logic for the Tic-Tac-Toe script includes various functions and strategies to facilitate gameplay, AI decision-making, and game analysis. Here's a detailed breakdown:
+
+1. **check_winner(board)**: Determines the game's status by checking for a win, draw, or ongoing game. It examines rows, columns, and diagonals for a win (three 'X's or 'O's in a line). If all cells are filled without a winner, it declares a draw. 
+
+2. **summarize_game_history(game_history)**: Aggregates the outcomes (wins, losses, draws) from a set of played games. It uses `check_winner` to determine the results of each game in the history.
+
+3. **make_move(board, move, player)**: Executes a player's move on the board. It checks if the chosen cell is empty and updates it with the player's symbol ('X' or 'O'). Returns `True` if the move is valid, `False` otherwise.
+
+4. **get_human_move(board)**: Facilitates human player input. It prompts for a cell number and validates the input, ensuring it's an unoccupied cell.
+
+5. **switch_player(player)**: Alternates between players after each turn.
+
+### AI Move Selection Strategies
+
+1. **epsilon_greedy_move_default(model, board, player, epsilon, show_text, board_state)**: Implements the epsilon-greedy strategy for AI moves. With probability `epsilon`, it chooses a random valid move (exploration). Otherwise, it predicts the best move based on the current board state (exploitation).
+
+2. **epsilon_greedy_move_value(model, board, player, epsilon, show_text, board_state)**: Similar to the default epsilon-greedy strategy, but specifically tailored for value-based models. It calculates the value of each possible move and selects the one with the highest predicted value.
+
+3. **random_move_selection(board, show_text)**: Selects a move randomly from the available valid moves. This is a purely exploratory strategy.
+
+4. **softmax_exploration(model, board, show_text, player, board_state)**: Uses the softmax function on the predicted Q-values to create a probability distribution over possible moves. It then randomly selects a move based on this distribution, allowing for a balance of exploration and exploitation.
+
+5. **ucb_move_selection(model, board, show_text, player, board_state, c_param)**: Implements the Upper Confidence Bound (UCB) strategy. It uses both the predicted Q-values and the frequency of each move being chosen to determine the best move, balancing exploration and exploitation.
+
+6. **minimax(board, player)**: Implements the Minimax algorithm, a recursive function that simulates all possible future moves and their outcomes to determine the best move. It considers the optimal moves of the opponent and chooses the move that maximizes the player's chances of winning while minimizing the opponent's chances.
+
+7. **minimax_with_epsilon(board, player, epsilon, show_text)**: Combines the Minimax algorithm with the epsilon-greedy approach. With probability `epsilon`, it selects a random move, and otherwise, it uses Minimax to choose the move.
+
+8. **check_potential_win(board, player, show_text)**: A helper function that checks if either player can win on the next move. It's useful for strategies that prioritize blocking or winning moves.
+
+### Utility Functions
+
+- **flush_cache()**: Clears the prediction cache, used for optimizing AI decision-making by storing previous board state evaluations.
+
+- **predict_with_cache(model, input_data, player, show_text, use_cache)**: Optimizes AI predictions by using a cache. If a board state has been evaluated previously, it retrieves the result from the cache; otherwise, it computes the prediction and stores it in the cache.
+
+- **print_cache_stats()**: Displays statistics about cache usage, including hits, misses, and the hit/miss ratio.
+
+- **ndarray_hash(array)**: Generates a unique hash for a numpy array, used in caching.
+
+- **get_valid_moves(board)**: Returns a list of valid move indices for a given board state.
+
+Each function and strategy contributes to a robust and adaptable AI for the Tic-Tac-Toe game, capable of both learning and challenging human players. The game logic balances between various AI strategies, allowing for dynamic and interesting gameplay.
 
 ## Notes
 - Ensure that you have a suitable environment for running TensorFlow, especially if using GPU acceleration.
