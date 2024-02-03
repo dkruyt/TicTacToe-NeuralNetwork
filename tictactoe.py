@@ -383,7 +383,7 @@ for game_number in range(1, n_games + 1):
         if args.show_visuals:
             plot_game_statistics(wins_for_X, wins_for_O, draws)
             # Update the epsilon plot
-            plot_epsilon_value(epsilon, game_number, n_games)
+            #plot_epsilon_value(epsilon, game_number, n_games)
 
         # Switch starting player for the next game
         if args.alternate_moves:
