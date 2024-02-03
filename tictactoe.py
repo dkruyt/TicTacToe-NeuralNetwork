@@ -173,7 +173,6 @@ def simulate_game_and_train(model, epsilon):
             print("Player " + (Fore.RED + 'O' if player == -1 else Fore.GREEN + 'X') + Style.RESET_ALL + "'s turn")
             print_board(board)
 
-        # todo we need this? Correct!!!!
         #board_state = np.array([board])
         # Adjust board state based on current player
         board_state = np.array([[-x if player == -1 else x for x in board]])
@@ -326,6 +325,7 @@ draws = 0
 list_X = []
 list_O = []
 list_draws = []
+list_epsilon = []
 
 model_update_count = 0
 
@@ -393,8 +393,9 @@ for game_number in range(1, n_games + 1):
         list_X.append(wins_for_X)
         list_O.append(wins_for_O)
         list_draws.append(draws)
+        list_epsilon.append(epsilon)
         if game_number % batch_size == 0 or game_number == n_games:
-            plot_cumulative_statistics(list_X, list_O, list_draws, n_games, batch_size)
+            plot_cumulative_statistics(list_X, list_O, list_draws, n_games, batch_size, list_epsilon)
 
         # Apply a 3-second delay if either 'delay' is enabled or a human player is playing
         if args.delay or args.human_player in ['X', 'O']:
