@@ -300,7 +300,7 @@ else:
     else:
         raise ValueError("Invalid model type")
 
-    print(f"New {args.model_type} model created.")
+    print(f"🧠 New {args.model_type} model created.")
 
 model.summary()
 
@@ -344,7 +344,7 @@ else:
 batch_game_history = []
 
 if args.human_player:
-    text = "SHALL WE PLAY A GAME?"
+    text = "🕹️ SHALL WE PLAY A GAME?"
     print()
     for char in text:
         sys.stdout.write(char)
@@ -405,7 +405,7 @@ for game_number in range(1, n_games + 1):
         clear_screen()
         save_model = input("\n🛑 Detected KeyboardInterrupt. Do you want to save the model before exiting? (y/n): ")
         if save_model.lower() == 'y':
-            print("Saving model...")
+            print("💾 Saving model...")
             # Save your model here
             model.save(args.model_name)  # Saves the model
             print("Model saved. Exiting.")
