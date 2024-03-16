@@ -1,4 +1,4 @@
-# README.md for Tic-Tac-Toe Neural Network Training Script
+# Tic-Tac-Toe Neural Network Training Script
 
 This repository contains a Python script for running a customizable Tic-Tac-Toe game simulation with AI training and visual analytics. This script was developed as a learning project to explore AI training and visualization techniques in the context of a Tic-Tac-Toe game. It incorporates various AI strategies and reward functions to demonstrate different approaches to training an AI agent. I created it with the help of a other AI just for fun, wanted to learn a little about training a neural network by playing Tic-Tac-Toe. It utilizes TensorFlow to create and train a neural network. The game includes various visualization features for the neural network's layers, activations, and game statistics, as well as command-line arguments to customize the game and training settings.
 
