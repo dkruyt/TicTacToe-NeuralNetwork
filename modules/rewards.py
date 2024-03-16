@@ -342,7 +342,8 @@ def assign_rewards_combined(game_history, winner):
                 target[move] += reward_for_block
 
         # Additional reward for predictive move
-        if check_future_win(board_state, move):
+        player = 1 if board_state[move] == 1 else -1  # Determine the player based on the move
+        if check_future_win(board_state, move, player):
             target[move] += predictive_reward
 
         # Incremental reward for each move leading to a win
