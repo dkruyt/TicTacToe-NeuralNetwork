@@ -361,8 +361,8 @@ def plot_cumulative_statistics(wins_for_X, wins_for_O, draws, total_games, batch
     if 'plotstats_fig' not in globals():
         plotstats_fig, plotstats_ax = plt.subplots(figsize=(10, 5))
         stats_lines = plotstats_ax.plot([], [], 'r-',  # Line for Wins for X
-                                    [], [], 'g-',  # Line for Wins for O
-                                    [], [], 'b-')  # Line for Draws
+                                        [], [], 'g-',  # Line for Wins for O
+                                        [], [], 'b-')  # Line for Draws
         plotstats_ax.set_xlim(0, total_games)
         plotstats_ax.set_ylim(0, total_games)
         plotstats_ax.set_xlabel('Game Number')
