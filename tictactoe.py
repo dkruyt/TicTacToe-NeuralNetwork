@@ -66,15 +66,17 @@ parser.add_argument('--agent-x-strategy', type=str,
 parser.add_argument('--agent-o-strategy', type=str,
                     choices=['epsilon_greedy', 'random', 'softmax', 'ucb', 'minimax', 'epsilon_minimax'], default='epsilon_greedy', 
                     help='Sets the strategy for Agent O, similarly impacting its gameplay tactics.')
+parser.add_argument('--train-disable', action='store_true',
+                    help='Disables model training and updates.')
 parser.add_argument('--debug', action='store_true', default=False,
                     help='Debug stuff.')
 args = parser.parse_args()
 
 # Print the argument values with Unicode icons
-print("🛠 Configured settings for Tic-Tac-Toe game:")
-print("👁️ Show Visuals:      ", args.show_visuals)
+print("🛠 Configured settings for Tic-Tac-Toe game:\n")
+print("👁️ Show Visuals:       ", args.show_visuals)
 print("📜 Show Text:         ", args.show_text)
-print("⏲️ Delay:             ", args.delay)
+print("⏲️ Delay:              ", args.delay)
 print("🎮 Human Player:      ", args.human_player)
 print("🔄 Alternate Moves:   ", args.alternate_moves)
 print("🎲 Number of Games:   ", args.games)
@@ -87,8 +89,9 @@ print("⏳ Epsilon Decay:     ", args.epsilon_decay)
 print("🤖 Model Type:        ", args.model_type)
 print("💾 Use Cache:         ", args.use_cache)
 print("🏆 Reward Strategy:   ", args.reward)
-print("⚔️ Agent X Strategy:  ", args.agent_x_strategy)
-print("🛡️ Agent O Strategy:  ", args.agent_o_strategy)
+print("⚔️ Agent X Strategy:   ", args.agent_x_strategy)
+print("🛡️ Agent O Strategy:   ", args.agent_o_strategy)
+print("🚫 Training Disabled: ", args.train_disable)
 
 print()
 
@@ -96,6 +99,7 @@ print()
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'  # Suppresses informational messages
 
+print("🔧 Importing local modules...\n")
 from modules.model import *
 from modules.visualizations import *
 from modules.game_logic import *
@@ -168,9 +172,9 @@ def simulate_game_and_train(model, epsilon):
         if args.show_text:
             cursor_topleft()
             plot_epsilon_value_text(epsilon, game_number, n_games)
-            print(f"Wins for X: {wins_for_X}, Wins for O: {wins_for_O}, Draws: {draws}\n")
-            print(f"Starting Player: {Fore.RED + 'X' if starting_player == 1 else Fore.GREEN + 'O'}" + Style.RESET_ALL)
-            print("Player " + (Fore.RED + 'O' if player == -1 else Fore.GREEN + 'X') + Style.RESET_ALL + "'s turn")
+            print(f"🏆 Wins for X: {wins_for_X}, 🏆 Wins for O: {wins_for_O}, 🤝 Draws: {draws}\n")
+            print(f"✨ Starting Player: {Fore.RED + 'X' if starting_player == 1 else Fore.GREEN + 'O'}" + Style.RESET_ALL)
+            print(f"🏃 Player " + (Fore.RED + 'O' if player == -1 else Fore.GREEN + 'X') + Style.RESET_ALL + "'s turn")
             print_board(board)
 
         #board_state = np.array([board])
@@ -255,9 +259,9 @@ def simulate_game_and_train(model, epsilon):
             if args.show_text:
                 cursor_topleft()
                 plot_epsilon_value_text(epsilon, game_number, n_games)
-                print(f"Wins for X: {wins_for_X}, Wins for O: {wins_for_O}, Draws: {draws}\n")
-                print(f"Starting Player: {Fore.RED + 'X' if starting_player == 1 else Fore.GREEN + 'O'}" + Style.RESET_ALL)
-                print("Player " + (Fore.RED + 'O' if player == -1 else Fore.GREEN + 'X') + Style.RESET_ALL + "'s turn")
+                print(f"🏆 Wins for X: {wins_for_X}, 🏆 Wins for O: {wins_for_O}, 🤝 Draws: {draws}\n")
+                print(f"✨ Starting Player: {Fore.RED + 'X' if starting_player == 1 else Fore.GREEN + 'O'}" + Style.RESET_ALL)
+                print(f"🏃 Player " + (Fore.RED + 'O' if player == -1 else Fore.GREEN + 'X') + Style.RESET_ALL + "'s turn")
                 print_board(board)
                 print_output_layer(predictions, board)
                 print()
@@ -282,7 +286,7 @@ def simulate_game_and_train(model, epsilon):
 # Create or load the model based on the type argument
 if os.path.exists(args.model_name):
     model = tf.keras.models.load_model(args.model_name)
-    print("Model loaded successfully.")
+    print("✅ Model loaded successfully: " + args.model_name)
 else:
     input_shape = (9,)
     if args.model_type == 'MLP':
@@ -362,12 +366,17 @@ for game_number in range(1, n_games + 1):
         current_game_history = simulate_game_and_train(model, epsilon)
         batch_game_history.append(current_game_history)  # Append the history of the current game
 
-        # Check if it's time to update the model
-        if game_number % batch_size == 0 or game_number == n_games:
+        # Check if it's time to update the model - Ensure --train-disable wasn't provided and batch_size is valid
+        should_update_model = not args.train_disable and \
+                              (batch_size is not None) and \
+                              (batch_size > 0) and \
+                              ((game_number % batch_size == 0) or (game_number == n_games))
+
+        if should_update_model:
             model_update_count += 1  # Increment the counter
             if args.show_text:
                 print(f"\033[3;0H", end='')
-            print(f"Updating model... (Update count: {model_update_count})")
+            print(f"🔄 Updating model... (Update count: {model_update_count})")
             update_model(model, batch_game_history)
             flush_cache()
             if args.show_visuals:

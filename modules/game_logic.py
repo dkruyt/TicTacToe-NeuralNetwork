@@ -335,7 +335,6 @@ def flush_cache():
     #print(f"\033[20;0H", end='')
     #print("Cache has been flushed.")
 
-# TODO: Implement via arg to enable or disable
 def predict_with_cache(model, input_data, player, show_text, use_cache):
     global cache_hits, cache_misses
     # Create a hash for the input data
