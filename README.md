@@ -1,7 +1,6 @@
 # README.md for Tic-Tac-Toe Neural Network Training Script
 
-## Overview
-This script is designed by Dennis Kruyt (With the help of a other AI) just for fun, wanted to learn a little about training a neural network by playing Tic-Tac-Toe. It utilizes TensorFlow to create and train a neural network. The game includes various visualization features for the neural network's layers, activations, and game statistics, as well as command-line arguments to customize the game and training settings.
+This repository contains a Python script for running a customizable Tic-Tac-Toe game simulation with AI training and visual analytics. This script was developed as a learning project to explore AI training and visualization techniques in the context of a Tic-Tac-Toe game. It incorporates various AI strategies and reward functions to demonstrate different approaches to training an AI agent. I created it with the help of a other AI just for fun, wanted to learn a little about training a neural network by playing Tic-Tac-Toe. It utilizes TensorFlow to create and train a neural network. The game includes various visualization features for the neural network's layers, activations, and game statistics, as well as command-line arguments to customize the game and training settings.
 
 ## Features
 
@@ -41,35 +40,43 @@ python tic_tac_toe.py --games 1000 --model-type MLP --model-name mlp-model.keras
 ### Available Arguments
 The arguments for this Python script provide extensive customization for running a Tic-Tac-Toe game with an AI. Here are detailed explanations for each argument:
 
-`--show-visuals`: Enables visual representation of the Tic-Tac-Toe board and game progress. When set, the game will display visual updates after each move, making it easier to follow the game. This option is particularly useful for understanding how the AI makes decisions.
-
-`--show-text`: When enabled, the game outputs text-based information about the current state of the game, such as the board layout and recent moves. This is useful for those who prefer a more descriptive view of the game or for debugging purposes.
-
-`--delay`: Introduces a delay between moves. This is particularly useful when observing AI vs AI games, as it slows down the game to a human-readable pace. It allows users to better follow the game's progress and understand the AI's decision-making process.
-
-`--human-player`: Specifies whether a human will play and, if so, whether as 'X' or 'O'. Setting this to 'None' results in an AI vs AI game. This flexibility allows users to either participate in the game or observe an AI-only match.
-
-`--alternate-moves`: When set, this option alternates the starting player between X and O in consecutive games. This is useful for ensuring fairness and variability in AI vs AI games, as it prevents one side from always having the advantage of the first move.
-
-`--games`: Determines the number of games to play. This is particularly relevant when training the AI, as it dictates the amount of gameplay data the AI will learn from.
-
-`--batch-size`: Specifies the number of games to be played before updating the AI model's training. If not set, it defaults to a tenth of the number of games specified. This allows for periodic training of the AI model, balancing between learning from enough data and updating the model frequently.
-
-`--model-name`: Sets the filename for saving or loading the AI model. This allows for persistence of the AI's learning, enabling the user to continue training an existing model or start with a pre-trained model.
-
-`--dense-units`: Specifies the number of neurons in each dense layer of the neural network model. This parameter can greatly affect the AI's learning capability and performance.
-
-`--dropout-rate`: Sets the dropout rate for the dropout layers in the neural network. Dropout is a regularization technique to prevent overfitting by randomly setting a fraction of input units to 0 at each update during training time.
-
-`--epsilon-start`, `--epsilon-end`, `--epsilon-decay`: These parameters control the epsilon-greedy strategy, which is used for balancing exploration and exploitation by the AI. `epsilon-start` is the initial value, `epsilon-end` is the minimum value, and `epsilon-decay` is the rate at which epsilon decreases after each game.
-
-`--model-type`: Chooses the type of AI model from a set of options like MLP (Multilayer Perceptron), CNN (Convolutional Neural Network), RNN (Recurrent Neural Network), etc. This choice significantly impacts how the AI processes game information and learns.
-
-`--reward`: Selects the reward strategy for the AI agent. Different strategies (e.g., 'block', 'progress', 'penalty') dictate how the AI evaluates and learns from various game outcomes.
-
-`--agent-x-strategy`, `--agent-o-strategy`: These arguments define the strategies for Agents X and O, respectively. Options like 'epsilon_greedy', 'random', 'softmax', etc., determine how each agent decides its moves, influencing the overall gameplay dynamics.
+- `--show-visuals`: Enables real-time visualizations of the game board and AI predictions, enhancing the interactive experience.
+- `--show-text`: Activates text-based output for game events and AI decisions, useful for detailed monitoring of game progress.
+- `--delay`: Introduces a delay between moves, allowing more time to observe and analyze AI behavior and game dynamics.
+- `--human-player [X/O/None]`: Allows a human player to participate as X or O against the AI, or set to None for AI vs AI games.
+- `--alternate-moves`: Alternates the starting player between X and O in successive games, ensuring balanced gameplay.
+- `--games [integer]`: Specifies the total number of games to be played in the simulation, controlling the length of the training session. Default is 10.
+- `--batch-size [integer]`: Determines the batch size for model updates, with a default of one-tenth the total number of games. 
+- `--model-name [string]`: Sets the filename for saving or loading the AI model, facilitating model reuse and continuous training. Default is 'tic_tac_toe_model.keras'.
+- `--dense-units [integer]`: Defines the number of neurons in each Dense layer of the neural network, impacting the model's complexity. Default is 32.
+- `--dropout-rate [float]`: Sets the dropout rate in Dropout layers, a technique to prevent overfitting in the neural network. Default is 0.2.
+- `--epsilon-start [float]`: Initial value of epsilon in epsilon-greedy strategy, governing the balance between exploration and exploitation. Default is 1.0.
+- `--epsilon-end [float]`: Final value of epsilon after decay, indicating the strategy's shift towards more exploitation over time. Default is 0.1.
+- `--epsilon-decay [float]`: Epsilon decay rate after each game, controlling the rate at which the strategy moves from exploration to exploitation. Default is 0.99.
+- `--model-type [MLP/Policy/Value/CNN/RNN/Simple]`: Selects the AI model type, with options including MLP, CNN, RNN, and others, each offering different learning capabilities. Default is 'MLP'.
+- `--use-cache`: Enables caching of model predictions to speed up the simulation. Default is False.
+- `--reward [block/progress/penalty/simple/future/combined/win_moves/winning_sequence/opponent_penalty/leadingupto]`: Chooses the reward strategy for training the AI, affecting how the model learns from game outcomes. Default is 'progress'.
+- `--agent-x-strategy [epsilon_greedy/random/softmax/ucb/minimax/epsilon_minimax]`: Determines the strategy for Agent X, influencing its decision-making process during the game. Default is 'epsilon_greedy'.
+- `--agent-o-strategy [epsilon_greedy/random/softmax/ucb/minimax/epsilon_minimax]`: Sets the strategy for Agent O, similarly impacting its gameplay tactics. Default is 'epsilon_greedy'.
+- `--train-disable`: Disables model training and updates.
+- `--debug`: Debug stuff. Default is False.
 
 These arguments provide a wide range of configurations to tailor the gameplay experience and AI behavior, offering both an engaging game for players and a rich environment for AI training and research.
+
+## Screenshots
+
+`Startup`
+
+![Startup Image](./images/startup.png)
+
+`--show-text`
+
+![Show Text Image](./images/show-text.png)
+
+`--show-visuals`
+
+![Show Visual Image](./images/show-visual.png)
+
 
 ##  Neural network models
 The provided code defines several neural network models using TensorFlow and Keras, each tailored for different aspects of learning and decision-making in a Tic-Tac-Toe game. Here's a detailed explanation of each model:
@@ -222,3 +229,9 @@ Each function and strategy contributes to a robust and adaptable AI for the Tic-
 ## Notes
 - Ensure that you have a suitable environment for running TensorFlow, especially if using GPU acceleration.
 - The visuals are best viewed in a Jupyter Notebook or an environment that supports IPython display features live vscode.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+
+Feel free to explore, modify, and enhance the script to suit your needs. Contributions and feedback are welcome!
