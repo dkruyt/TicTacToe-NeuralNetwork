@@ -352,26 +352,29 @@ def plot_epsilon_value(epsilon_value, game_number, total_games):
 # Global variables for the figure, axes and lines
 global plotstats_fig, stats_ax, stats_lines
 
+# Global variables for the figure, axes and lines
+global plotstats_fig, plotstats_ax, stats_lines
+
 def plot_cumulative_statistics(wins_for_X, wins_for_O, draws, total_games, batch_size, epsilon_values):
 
-    global plotstats_fig, stats_ax, epsilon_ax, stats_lines, epsilon_line
+    global plotstats_fig, plotstats_ax, epsilon_ax, stats_lines, epsilon_line
     labels = ['Wins for X', 'Wins for O', 'Draws']
 
     # Create the figure and axes if they don't exist
     if 'plotstats_fig' not in globals():
-        plotstats_fig, stats_ax = plt.subplots(figsize=(10, 5))
-        stats_lines = stats_ax.plot([], [], 'r-',  # Line for Wins for X
+        plotstats_fig, plotstats_ax = plt.subplots(figsize=(10, 5))
+        stats_lines = plotstats_ax.plot([], [], 'r-',  # Line for Wins for X
                                     [], [], 'g-',  # Line for Wins for O
                                     [], [], 'b-')  # Line for Draws
-        stats_ax.set_xlim(0, total_games)
-        stats_ax.set_ylim(0, total_games)
-        stats_ax.set_xlabel('Game Number')
-        stats_ax.set_ylabel('Cumulative Count')
-        stats_ax.set_title('Game Statistics Over Time')
-        stats_ax.legend(labels, loc='upper right')
+        plotstats_ax.set_xlim(0, total_games)
+        plotstats_ax.set_ylim(0, total_games)
+        plotstats_ax.set_xlabel('Game Number')
+        plotstats_ax.set_ylabel('Cumulative Count')
+        plotstats_ax.set_title('Game Statistics Over Time')
+        plotstats_ax.legend(labels, loc='upper right')
 
         # Create a second y-axis for the epsilon values
-        epsilon_ax = stats_ax.twinx()
+        epsilon_ax = plotstats_ax.twinx()
         epsilon_line, = epsilon_ax.plot([], [], 'm-', label='Epsilon')  # Magenta line for epsilon value
         epsilon_ax.set_ylim(0, 1)  # Epsilon values are typically between 0 and 1
         epsilon_ax.set_ylabel('Epsilon Value')
@@ -396,4 +399,3 @@ def plot_cumulative_statistics(wins_for_X, wins_for_O, draws, total_games, batch
     # Redraw the plot
     plotstats_fig.canvas.draw()
     plt.pause(0.001)  # Pause to update the plot
-
