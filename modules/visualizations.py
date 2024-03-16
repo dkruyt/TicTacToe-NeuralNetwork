@@ -350,9 +350,6 @@ def plot_epsilon_value(epsilon_value, game_number, total_games):
     plt.pause(0.001)  # Pause to update the plot
 
 # Global variables for the figure, axes and lines
-global plotstats_fig, stats_ax, stats_lines
-
-# Global variables for the figure, axes and lines
 global plotstats_fig, plotstats_ax, stats_lines
 
 def plot_cumulative_statistics(wins_for_X, wins_for_O, draws, total_games, batch_size, epsilon_values):
