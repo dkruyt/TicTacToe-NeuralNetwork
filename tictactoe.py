@@ -58,7 +58,7 @@ parser.add_argument('--model-type', type=str,
 parser.add_argument('--use-cache', action='store_true', default=False,
                     help='Enables caching of model predictions to speed up the simulation.')
 parser.add_argument('--reward', type=str,
-                    choices=['block', 'progress', 'penalty', 'simple', 'future', 'combined', 'win_moves', 'winning_sequence', 'opponent_penalty'], default='progress', 
+                    choices=['block', 'progress', 'penalty', 'simple', 'future', 'combined', 'win_moves', 'winning_sequence', 'opponent_penalty', 'leadingupto'], default='progress', 
                     help='Chooses the reward strategy for training the AI, affecting how the model learns from game outcomes.')
 parser.add_argument('--agent-x-strategy', type=str,
                     choices=['epsilon_greedy', 'random', 'softmax', 'ucb', 'minimax', 'epsilon_minimax'], default='epsilon_greedy', 

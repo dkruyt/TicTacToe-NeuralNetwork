@@ -1,5 +1,6 @@
 import numpy as np
 import random
+import copy
 
 """
 This section of code includes a variety of reward assignment strategies for training a reinforcement learning agent in Tic-Tac-Toe. Each strategy has a unique approach to rewarding and penalizing game states and actions, designed to teach the AI optimal gameplay.
@@ -127,81 +128,159 @@ def assign_rewards_progress(game_history, winner):
     reward_for_win = 1.0
     reward_for_loss = -1.0
     reward_for_draw = 0.5
-    reward_for_progress = 0.1  # Incremental reward for moves leading to a win
-
-    #print(f"Game outcome: {'Win' if winner == 1 else 'Loss' if winner == -1 else 'Draw'}")
-
-    # Determine the base reward based on game outcome
-    if winner == 1:
-        reward = reward_for_win
-    elif winner == -1:
-        reward = reward_for_loss
-    elif winner == 2:
-        reward = reward_for_draw
-    else:
-        raise ValueError("Invalid winner value")
-
-    # If the game was won, distribute rewards backwards from the winning move
-    if winner in [1, -1]:
-        decay_factor = 0.9
-        current_reward = reward
-
-        for i in range(len(game_history) - 1, -1, -1):
-            board_state, move = game_history[i]
-            target = np.zeros(9)
-
-            # Assign reward to the move
-            target[move] = current_reward
-
-            # Update the game history with the new target
-            game_history[i] = (board_state, target)
-
-            #print(f"Move {i+1}, Board State: {board_state}, Move: {move}, Reward: {current_reward:.2f}")
-
-            # Apply decay to the reward for the next (earlier) move
-            current_reward *= decay_factor
-
-    # If the game resulted in a draw, assign the draw reward
-    elif winner == 2:
-        for i in range(len(game_history)):
-            board_state, move = game_history[i]
-            target = np.zeros(9)
-            target[move] = reward_for_draw
-            game_history[i] = (board_state, target)
-
-            #print(f"Move {i+1}, Board State: {board_state}, Move: {move}, Reward: {reward_for_draw}")
-
-def assign_rewards_future(game_history, winner):
-    reward_for_win = 1.0
-    reward_for_loss = -1.0
-    reward_for_draw = 0.5
-    predictive_reward = 0.2
-
-    if winner == 1:
-        reward = reward_for_win
-    elif winner == -1:
-        reward = reward_for_loss
-    elif winner == 2:
-        reward = reward_for_draw
-    else:
-        raise ValueError("Invalid winner value")
-
     decay_factor = 0.9
-    current_reward = reward
+
+    print(f"Game outcome: {'Win' if winner == 1 else 'Loss' if winner == -1 else 'Draw'}")
+    print(game_history)
+
+    # Initialize rewards for both players
+    current_reward_player1 = reward_for_win if winner == 1 else (reward_for_draw if winner == 2 else reward_for_loss)
+    current_reward_player2 = reward_for_win if winner == -1 else (reward_for_draw if winner == 2 else reward_for_loss)
+
+    # Determine player for each move
+    move_player = 1  # Assuming player 1 starts and players alternate
 
     for i in range(len(game_history) - 1, -1, -1):
         board_state, move = game_history[i]
         target = np.zeros(9)
-        target[move] = current_reward
-        # Additional reward for predictive move
-        if check_future_win(board_state, move):
-            #print('Future win detected - predictive reward applied')
-            target[move] += predictive_reward
-        game_history[i] = (board_state, target)
-        current_reward *= decay_factor
-        #print(f'End of iteration {i} current_reward:', current_reward)
 
-    #print('Final game history:', game_history)
+        # Determine the current reward and player making the move
+        if move_player == 1:
+            current_reward = current_reward_player1
+            # Apply decay and update reward for player 1's next move
+            current_reward_player1 = current_reward * decay_factor
+        else:
+            current_reward = current_reward_player2
+            # Apply decay and update reward for player 2's next move
+            current_reward_player2 = current_reward * decay_factor
+
+        # Assign reward to the move based on the player
+        target[move] = current_reward
+        # Update the game history with the new target
+        game_history[i] = (board_state, target)
+
+        print(f"Move {i+1}, Board State: {board_state}, Move: {move}, Reward: {current_reward:.2f}")
+
+        # Switch player for the next iteration (previous move)
+        move_player *= -1  # Switch between 1 and -1
+
+def assign_rewards_progress_test1(game_history, winner):
+    reward_for_win = 1.0
+    reward_for_loss = -1.0
+    reward_for_draw = 0.5
+    decay_factor = 0.9
+    
+    tmp_game_history = copy.deepcopy(game_history)
+    
+    current_reward_player1 = reward_for_win if winner == 1 else (reward_for_draw if winner == 2 else reward_for_loss)
+    current_reward_player2 = reward_for_win if winner == -1 else (reward_for_draw if winner == 2 else reward_for_loss)
+    #print(winner)
+    #print(game_history)
+    for i in reversed(range(len(game_history))):
+        current_reward = 0  # Initialize current_reward for safety
+
+        if i > 0:  # Ensure there is a previous state to apply the reward to
+            board_state, move = game_history[i]
+            prev_board_state, prev_move = game_history[i-1]
+            prev_target = np.zeros(9)  # Initialize target with zeros for the previous state
+            if board_state[move] == 1:
+                #print("player X")
+                current_reward = current_reward_player1
+                current_reward_player1 *= decay_factor
+            elif board_state[move] == -1:
+                #print("player O")
+                current_reward = current_reward_player2
+                current_reward_player2 *= decay_factor
+                    
+            prev_target[move] = current_reward # Assign the calculated reward to the previous state's move
+            tmp_game_history[i-1] = (prev_board_state, prev_target)
+        
+        #print(f"Move {i+1}, Board State prev: {prev_board_state}, Move: {move}, Reward: {current_reward:.2f}")
+        #print(f"Move {i+1}, Board State curr: {board_state}, Move: {move}, Reward: {current_reward:.2f}")
+
+    tmp_game_history.pop()
+    game_history = tmp_game_history
+    
+    #print(game_history)
+
+    
+    #print("\nUpdated game history with rewards:")
+    #for state, reward in game_history:
+    #    print(state, reward)
+
+def assign_rewards_progress_test2(game_history, winner):
+    reward_for_win = 1.0
+    reward_for_loss = -1.0
+    reward_for_draw = 0.5
+    decay_factor = 0.9
+    
+    current_reward_player1 = reward_for_win if winner == 1 else (reward_for_draw if winner == 0 else reward_for_loss)
+    current_reward_player2 = reward_for_win if winner == -1 else (reward_for_draw if winner == 0 else reward_for_loss)
+    
+    for i in reversed(range(len(game_history) - 1)):
+        board_state, move = game_history[i + 1]
+        prev_board_state, prev_move = game_history[i]
+        target = np.zeros(9)
+        
+        if board_state[move] == 1:
+            current_reward = current_reward_player1
+            current_reward_player1 *= decay_factor
+        elif board_state[move] == -1:
+            current_reward = current_reward_player2
+            current_reward_player2 *= decay_factor
+        else:
+            raise ValueError("Invalid board state")
+        
+        target[move] = current_reward
+        game_history[i] = (prev_board_state, target)
+    
+    # Remove the last state since it doesn't have a previous state to assign the reward to
+    game_history.pop()
+    
+    return game_history
+
+def assign_rewards_future(game_history, winner):
+    # Initialize reward parameters
+    reward_for_win = 1.0
+    reward_for_loss = -1.0
+    reward_for_draw = 0.5
+    predictive_reward = 0.2
+    decay_factor = 0.9
+
+    #print(f"Game outcome: {'Win' if winner == 1 else 'Loss' if winner == -1 else 'Draw'}")
+
+    # Initialize current rewards for both players
+    current_reward_player1 = reward_for_win if winner == 1 else (reward_for_draw if winner == 2 else reward_for_loss)
+    current_reward_player2 = reward_for_win if winner == -1 else (reward_for_draw if winner == 2 else reward_for_loss)
+    # Determine player for each move
+    move_player = 1  # Start with player 1
+
+    for i in range(len(game_history) - 1, -1, -1):
+        board_state, move = game_history[i]
+        target = np.zeros(9)
+
+        # Determine current reward and apply predictive reward if applicable
+        if move_player == 1:
+            current_reward = current_reward_player1
+            if check_future_win(board_state, move, player=1):
+                current_reward += predictive_reward
+            # Update reward for next player 1 move
+            current_reward_player1 = current_reward * decay_factor
+        else:
+            current_reward = current_reward_player2
+            if check_future_win(board_state, move, player=-1):
+                current_reward += predictive_reward
+            # Update reward for next player 2 move
+            current_reward_player2 = current_reward * decay_factor
+
+        # Assign the calculated reward to the move
+        target[move] = current_reward
+        game_history[i] = (board_state, target)
+
+        print(f"Move {i+1}, Board State: {board_state}, Move: {move}, Reward: {current_reward:.2f}")
+
+        # Switch player for the next iteration (previous move)
+        move_player *= -1
 
 def check_potential_win(board, player):
     for i in range(3):
@@ -214,14 +293,17 @@ def check_potential_win(board, player):
             return True
     return False
 
-# Function to check a potential win in the next move
-def check_future_win(board_state, move):
+def check_future_win(board_state, move, player):
+    """
+    Checks if a move leads to a potential win in future turns for the specified player.
+    Player should be 1 or -1, indicating player 1 or player 2 respectively.
+    """
     temp_state = board_state.copy()
-    temp_state[move] = 1  # Assuming the sign of the current player is 1
-    for i in range(9):  
+    temp_state[move] = player  # Set the move for the current player
+    for i in range(9):
         if temp_state[i] == 0:
-            temp_state[i] = 1
-            if check_potential_win(temp_state, 1):  # Assuming check_win_condition function is there
+            temp_state[i] = player
+            if check_potential_win(temp_state, player):
                 return True
             temp_state[i] = 0
     return False
@@ -342,6 +424,45 @@ def assign_rewards_for_winning_sequence(game_history, winner):
 
     return game_history
 
+def assign_rewards_leading_upto(game_history, winner):
+    """
+    Assign rewards to game moves based on the final outcome, with a decay factor applied
+    to rewards for moves further from the game's conclusion. Rewards are calculated separately
+    for each player based on their actions.
+    """
+    # Rewards and decay factors
+    reward_for_win = 1.0
+    reward_for_draw = 0.5
+    decay_factor = 0.9  # Decay factor for the reward
+    
+    # Track rewards for each player separately
+    current_reward_player1 = reward_for_win if winner == 1 else (reward_for_draw if winner == 0 else 0)
+    current_reward_player2 = reward_for_win if winner == -1 else (reward_for_draw if winner == 0 else 0)
+
+    # Determine player for each move
+    move_player = 1  # Start with player 1
+
+    # Iterate through game history backwards
+    for i in range(len(game_history) - 1, -1, -1):
+        board_state, move = game_history[i]
+        target = np.zeros(9)
+
+        # Apply the current reward to the move based on which player made the move
+        if move_player == 1:
+            target[move] = current_reward_player1
+            # Update reward for next player 1 move
+            current_reward_player1 *= decay_factor
+        else:
+            target[move] = current_reward_player2
+            # Update reward for next player 2 move
+            current_reward_player2 *= decay_factor
+
+        # Update game history with the assigned rewards
+        game_history[i] = (board_state, target)
+
+        # Switch player for the next iteration (previous move)
+        move_player *= -1  # Switch between 1 and -1
+        
 def assign_rewards_and_opponent_penalty(game_history, winner):
     """
     Assign rewards to all moves that contribute to the winning sequence and 
@@ -384,8 +505,6 @@ def assign_rewards_and_opponent_penalty(game_history, winner):
             target = np.zeros(9)
             target[move] = 0.0
             game_history[i] = (board_state, target)
-
-    return game_history
 
 def find_winning_sequence_moves(game_history):
     """
