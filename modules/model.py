@@ -50,7 +50,7 @@ These models provide a comprehensive toolkit for developing and training AI for 
 # MLP Model
 def create_mlp_model(input_shape, dense_units, dropout_rate):
     model = keras.Sequential([
-        layers.Dense(dense_units, activation='relu', input_shape=input_shape, name='input_layer'),
+        layers.Dense(dense_units, activation='relu', input_shape=input_shape),
         layers.Dropout(dropout_rate, name='dropout_1'),
         layers.Dense(dense_units, activation='relu', name='hidden_layer_1'),
         layers.Dropout(dropout_rate, name='dropout_2'),
@@ -61,7 +61,7 @@ def create_mlp_model(input_shape, dense_units, dropout_rate):
 
 def create_policy_mlp_model(input_shape, dense_units, dropout_rate):
     model = keras.Sequential([
-        layers.Dense(dense_units, activation='relu', input_shape=input_shape, name='input_layer'),
+        layers.Dense(dense_units, activation='relu', input_shape=input_shape),
         layers.Dropout(dropout_rate, name='dropout_1'),
         layers.Dense(dense_units, activation='relu', name='hidden_layer_1'),
         layers.Dropout(dropout_rate, name='dropout_2'),
@@ -72,7 +72,7 @@ def create_policy_mlp_model(input_shape, dense_units, dropout_rate):
 
 def create_value_mlp_model(input_shape, dense_units, dropout_rate):
     model = keras.Sequential([
-        layers.Dense(dense_units, activation='relu', input_shape=input_shape, name='input_layer'),
+        layers.Dense(dense_units, activation='relu', input_shape=input_shape),
         layers.Dropout(dropout_rate, name='dropout_1'),
         layers.Dense(dense_units, activation='relu', name='hidden_layer_1'),
         layers.Dropout(dropout_rate, name='dropout_2'),
@@ -85,7 +85,7 @@ def create_value_mlp_model(input_shape, dense_units, dropout_rate):
 # CNN Model
 def create_cnn_model(input_shape, dense_units, dropout_rate):
     model = keras.Sequential([
-        layers.Reshape((3, 3, 1), input_shape=input_shape, name='input_layer'),  
+        layers.Reshape((3, 3, 1), input_shape=input_shape),  
         layers.Conv2D(32, (3, 3), activation='relu', name='conv_layer'),
         layers.Flatten(name='flatten_layer'),
         layers.Dense(dense_units, activation='relu', name='hidden_layer'),
@@ -98,7 +98,7 @@ def create_cnn_model(input_shape, dense_units, dropout_rate):
 # RNN Model
 def create_rnn_model(input_shape, dense_units, dropout_rate):
     model = keras.Sequential([
-        layers.Reshape((9, 1), input_shape=input_shape, name='input_layer'), 
+        layers.Reshape((9, 1), input_shape=input_shape), 
         layers.SimpleRNN(dense_units, activation='relu', name='rnn_layer'),
         layers.Dense(dense_units, activation='relu', name='hidden_layer'),
         layers.Dropout(dropout_rate, name='dropout'),
@@ -110,7 +110,7 @@ def create_rnn_model(input_shape, dense_units, dropout_rate):
 # simple mlp
 def create_simple_mlp_model(input_shape, dense_units):
     model = keras.models.Sequential([
-        keras.layers.Dense(dense_units, activation="relu", input_shape=input_shape, name='input_layer'),
+        keras.layers.Dense(dense_units, activation="relu", input_shape=input_shape),
         keras.layers.Dense(9, name='output_layer')
     ], name='SimpleMLP_Model')
     model.compile(loss="mse", optimizer="adam")
