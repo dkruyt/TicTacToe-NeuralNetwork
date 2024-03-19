@@ -205,7 +205,9 @@ def print_tensorflow_info():
                 except:
                     print("    ℹ️ GPU memory details not available.")
 
-                print(f"    💾 Memory Limit: {device.memory_limit_bytes / (1024**3):.2f} GB")
+                # Check if the device has the attribute 'memory_limit_bytes' before accessing it
+                if hasattr(device, 'memory_limit_bytes'):
+                    print(f"    💾 Memory Limit: {device.memory_limit_bytes / (1024**3):.2f} GB")
 
             elif device.device_type == 'CPU':
                 # Additional CPU details if needed
