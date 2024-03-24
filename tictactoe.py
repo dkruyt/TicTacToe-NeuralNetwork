@@ -34,6 +34,8 @@ parser.add_argument('--delay', action='store_true',
                     help='Introduces a delay between moves, allowing more time to observe and analyze AI behavior and game dynamics.')
 parser.add_argument('--human-player', type=str, choices=['X', 'O', 'None'], default='None', 
                     help='Allows a human player to participate as X or O against the AI, or set to None for AI vs AI games.')
+parser.add_argument('--llm-player', type=str, choices=['X', 'O', 'None'], default='None', 
+                    help='Activates an LLM (ChatGPT) player as X or O against the human/AI, or set to None for other modes.')
 parser.add_argument('--alternate-moves', action='store_true', 
                     help='Alternates the starting player between X and O in successive games, ensuring balanced gameplay.')
 parser.add_argument('--games', type=int, default=10, 
@@ -200,6 +202,9 @@ def simulate_game_and_train(model, epsilon):
         # Determine the move based on player, strategy, and model type
         if (args.human_player == 'X' and player == 1) or (args.human_player == 'O' and player == -1):
             move = get_human_move(board)
+        # LMM logic to determine the move based on strategy
+        elif (args.llm_player == 'X' and player == 1) or (args.llm_player == 'O' and player == -1):
+            move = get_llm_move(board, player)  # Use LLM for move
         else:
             # For 'Value' model type, select strategy support
             if args.model_type == 'Value':

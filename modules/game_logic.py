@@ -1,6 +1,9 @@
 import random
 import numpy as np
 from colorama import Fore, Back, Style
+import ollama
+import re
+import json
 
 """
 This script includes a variety of functions to support gameplay and analysis in Tic-Tac-Toe, each contributing to the game's artificial intelligence and user interaction capabilities.
@@ -101,6 +104,49 @@ def get_human_move(board):
         except ValueError:
             print("🚫 Invalid input. Please enter a number.")
     return move
+
+def get_llm_move(board, player):
+    """
+    Get the next move from the LLM (Ollama) player.
+    Args:
+    - board: Current state of the board as a list of 9 integers (1, 0, -1).
+    - player: The current player (1 for 'X', -1 for 'O').
+    
+    Returns:
+    - int: The position (0-8) for the next move.
+    """
+    player_char = 'X' if player == 1 else 'O'
+    board_json = json.dumps(board)
+    prompt = f"The current tic tac toe board state, 1 for X, -1 for O, 0 for empty: {board_json}\nYou are playing as {player_char}.\nProvide the best move position (a single interger from 0 to 8) for player {player} with NO additional text or explanation."
+    try:
+        # Send the prompt to Ollama and receive the response
+        response = ollama.chat(
+            model='codellama:13b',  # Replace with your specific model name
+            messages=[{'role': 'user', 'content': prompt}]
+        )
+
+        print (prompt)
+  
+        # Extract and parse the move from the response
+        response_text = response['message']['content']
+        print (response_text)
+        match = re.search(r'\b\d\b', response_text) # Look for a single digit in the response
+        print (match)
+
+        if match:
+            move = int(match.group(0))
+            if board[move] == 0:
+                return move
+            else:
+                raise ValueError("Invalid move suggested by LLM (position already taken).")
+        else:
+            raise ValueError("No valid move found in LLM response.")
+
+    except ValueError as e:
+        print(f"Error in LLM move generation: {e}")
+        # Fallback to a random move in case of specific error
+        valid_moves = [i for i, x in enumerate(board) if x == 0]
+        return valid_moves[0] if valid_moves else None
 
 # Function to switch players between moves
 def switch_player(player):
